@@ -25,6 +25,15 @@ branch1: li x1, 500 # x1 now contains 500
 li x20, 2           # Set the flag register
                     # Now we check that x1 contains 500 and x2 contains 100
 
+lui x1,0x11111
+addi    x1,x1,273 # 11111111 <_end+0x1110111>
+lui x2,0x22222
+addi    x2,x2,546 # 22222222 <_end+0x12221222>
+and x0,x1,x2
+li  x7,0
+li  x3,27
+li x20, 3 
+
 # TODO: add more tests here
 
 done: j done

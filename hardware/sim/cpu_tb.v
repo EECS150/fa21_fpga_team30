@@ -49,7 +49,7 @@ module cpu_tb();
     .serial_out()
   );
 
-  wire [31:0] timeout_cycle = 10;
+  wire [31:0] timeout_cycle = 25; //10
 
   // Reset IMem, DMem, and RegFile before running new test
   task reset;
@@ -392,6 +392,7 @@ module cpu_tb();
     check_result_dmem(DATA_ADDR6, 32'h00007800, "S-Type SB 2");
     check_result_dmem(DATA_ADDR7, 32'h00780000, "S-Type SB 3");
     check_result_dmem(DATA_ADDR8, 32'h78000000, "S-Type SB 4");
+
 
     // Test U-Type Insts --------------------------------------------------
     // - LUI, AUIPC

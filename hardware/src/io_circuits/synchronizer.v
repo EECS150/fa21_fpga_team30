@@ -1,7 +1,7 @@
 module synchronizer #(parameter WIDTH = 1) (
     input [WIDTH-1:0] async_signal,
     input clk,
-    output [WIDTH-1:0] sync_signal
+    output reg [WIDTH-1:0] sync_signal
 );
     // TODO: Create your 2 flip-flop synchronizer here
     // This module takes in a vector of WIDTH-bit asynchronous
@@ -10,5 +10,11 @@ module synchronizer #(parameter WIDTH = 1) (
     // that are synchronized to the input clk
 
     // Remove this line once you create your synchronizer
-    assign sync_signal = 0;
+    reg [WIDTH-1 :0] inter;
+
+    always @(posedge clk) begin
+        inter <= async_signal;
+        sync_signal <= inter;
+    end
+    
 endmodule

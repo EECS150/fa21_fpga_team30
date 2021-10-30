@@ -10,5 +10,11 @@ module edge_detector #(
     // Feel free to use as many number of registers you like
 
     // Remove this line once you create your edge detector
-    assign edge_detect_pulse = 0;
+    reg [WIDTH-1 :0] signal_in_ff1;
+    
+    always @(posedge clk) begin
+        signal_in_ff1 <= signal_in;
+    end
+    
+    assign edge_detect_pulse = signal_in & ~signal_in_ff1;
 endmodule
