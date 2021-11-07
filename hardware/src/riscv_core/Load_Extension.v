@@ -20,7 +20,7 @@ module Load_Extension(
 					Ld_out <= {{16{DMem_out[15]}}, DMem_out[15:0]};
 				end
 				else begin
-					Ld_out <= {{16{DMem_out[15]}}, DMem_out[31:16]};					
+					Ld_out <= {{16{DMem_out[31]}}, DMem_out[31:16]};					
 				end
 			end 
 			LB: begin

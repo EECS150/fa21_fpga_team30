@@ -4,6 +4,7 @@ module control_unit_decode (
     input [31:0] Inst_Fetch,
     input [31:0] Inst_Decode,
     input [31:0] Inst_Execute,
+    input control_hazards_sum,
 	output reg [2:0] ImmSel_reg,
 	output reg BrUn_reg,
 	output reg ASel_reg,
@@ -93,6 +94,24 @@ module control_unit_decode (
     wire CSRSel;
     reg [1:0] Data_ASel, Data_BSel;
     
+    reg control_hazards_sum_ff1;
+
+    always @(posedge clk) begin
+        if(rst) begin
+            control_hazards_sum_ff1 <= 1'b0;
+        end
+        else begin
+            control_hazards_sum_ff1 <= control_hazards_sum;
+        end
+    end
+
+    wire control_hazards_sum_negedge;
+
+
+    assign control_hazards_sum_negedge = ~control_hazards_sum && control_hazards_sum_ff1;
+    
+
+
     always @(*) begin
         if(Hold_reg) begin
             Hold = 1'b0;
@@ -111,11 +130,14 @@ module control_unit_decode (
 //(opcode == opcode_R || opcode == opcode_I ||opcode == opcode_S || opcode == opcode_L || opcode == opcode_B ||opcode == opcode_JAL ||opcode == opcode_JALR ||opcode == opcode_LUI ||opcode == opcode_AUIPC)
     always @(*) begin
         case(opcode)
-            opcode_R, opcode_I, opcode_L, opcode_S, opcode_CSR, opcode_B: begin
-                if((rd_Decode == ra1) && (opcode_Decode == opcode_R || opcode_Decode == opcode_I || opcode_Decode == opcode_AUIPC || opcode_Decode == opcode_LUI)) begin
+            opcode_R, opcode_I, opcode_L, opcode_S, opcode_CSR, opcode_B, opcode_JALR: begin
+                if(control_hazards_sum && control_hazards_sum_ff1) begin
+                    Data_ASel = REG;
+                end
+                else if((rd_Decode == ra1) && (ra1 != 5'b0) && (opcode_Decode == opcode_R || opcode_Decode == opcode_I || opcode_Decode == opcode_AUIPC || opcode_Decode == opcode_LUI )) begin
                     Data_ASel = DATA_D;
                 end
-                else if((rd_Execute == ra1) && (opcode_Execute == opcode_R || opcode_Execute == opcode_I || opcode_Execute == opcode_L || opcode_Execute == opcode_AUIPC || opcode_Execute == opcode_LUI)) begin
+                else if((rd_Execute == ra1) && (ra1 != 5'b0) && ~control_hazards_sum_negedge && (opcode_Execute == opcode_R || opcode_Execute == opcode_I || opcode_Execute == opcode_L || opcode_Execute == opcode_AUIPC || opcode_Execute == opcode_LUI )) begin
                     Data_ASel = DATA_D_ff1;                 
                 end
                 else begin
@@ -133,10 +155,13 @@ module control_unit_decode (
     always @(*) begin
         case(opcode)
             opcode_R, opcode_S, opcode_B: begin
-                if((rd_Decode == ra2) && (opcode_Decode == opcode_R || opcode_Decode == opcode_I || opcode_Decode == opcode_AUIPC || opcode_Decode == opcode_LUI)) begin
+                if(control_hazards_sum && control_hazards_sum_ff1) begin
+                    Data_BSel = REG;
+                end
+                else if((rd_Decode == ra2) && (ra2 != 5'b0) && (opcode_Decode == opcode_R || opcode_Decode == opcode_I || opcode_Decode == opcode_AUIPC || opcode_Decode == opcode_LUI)) begin
                     Data_BSel = DATA_D;
                 end
-                else if((rd_Execute == ra2) && (opcode_Execute == opcode_R || opcode_Execute == opcode_I || opcode_Execute == opcode_L || opcode_Execute == opcode_AUIPC || opcode_Execute == opcode_LUI)) begin
+                else if((rd_Execute == ra2) && (ra2 != 5'b0) && ~control_hazards_sum_negedge && (opcode_Execute == opcode_R || opcode_Execute == opcode_I || opcode_Execute == opcode_L || opcode_Execute == opcode_AUIPC || opcode_Execute == opcode_LUI)) begin
                     Data_BSel = DATA_D_ff1;                 
                 end
                 else begin

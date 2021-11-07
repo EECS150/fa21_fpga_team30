@@ -243,7 +243,8 @@ module cpu #(
     wire [1:0] MemRW_decode;
     wire [2:0] LdSel_decode;
     wire [1:0] WBSel_decode;
-    wire CSRSel;
+    wire CSRSel_decode;
+    wire control_hazards_sum;
 
     control_unit_decode control_unit_decode (
         .clk(clk),
@@ -251,6 +252,7 @@ module cpu #(
         .Inst_Fetch(Inst_Fetch),
         .Inst_Decode(Inst_Decode),
         .Inst_Execute(Inst_Execute),
+        .control_hazards_sum(control_hazards_sum),
         .ImmSel_reg(ImmSel),
         .BrUn_reg(BrUn),
         .ASel_reg(ASel),
@@ -262,7 +264,7 @@ module cpu #(
         .RegWen_reg(RegWen_decode),
         .LdSel_reg(LdSel_decode),
         .WBSel_reg(WBSel_decode),
-        .CSRSel_reg(CSRSel),
+        .CSRSel_reg(CSRSel_decode),
         .Hold(Hold),
         .Hold_reg(Hold_decode)
     );
@@ -297,21 +299,12 @@ module cpu #(
         .Inst_Execute(Inst_Execute)
     );
 
-    always @(posedge clk) begin
-        if(rst) begin
-            tohost_csr <= 0;
-        end
-        else if(CSRSel) begin
-            tohost_csr <= ALU_out;
-        end
-        else begin
-            tohost_csr <= tohost_csr;
-        end
-    end
+
 
     wire [1:0] MemRW_EX;
     wire [2:0] LdSel_EX;
     wire [1:0] WBSel_EX;
+    wire CSRSel_EX;
 
 
     control_unit_EX control_unit_EX (
@@ -325,12 +318,27 @@ module cpu #(
         .RegWen_decode_reg(RegWen_decode),
         .LdSel_decode_reg(LdSel_decode),
         .WBSel_decode_reg(WBSel_decode),
+        .CSRSel_decode_reg(CSRSel_decode),
         .MemRW_EX(MemRW_EX),
         .RegWen_EX_reg(RegWen_EX),
         .LdSel_EX_reg(LdSel_EX),
         .WBSel_EX_reg(WBSel_EX),
-        .PCSel(PCSel)
+        .CSRSel_EX_reg(CSRSel_EX),
+        .PCSel(PCSel),
+        .control_hazards(control_hazards_sum)
     );
+
+    always @(posedge clk) begin
+        if(rst) begin
+            tohost_csr <= 0;
+        end
+        else if(CSRSel_EX) begin
+            tohost_csr <= ALU_out_reg;
+        end
+        else begin
+            tohost_csr <= tohost_csr;
+        end
+    end
 
     wire [31:0] mem_in;
 
