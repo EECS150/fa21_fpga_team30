@@ -63,20 +63,6 @@ module cpu #(
       .doutb(imem_doutb)
     );
 
-    wire [13:0] iomem_addr;
-    wire [31:0] iomem_din, iomem_dout;
-    wire [3:0] iomem_we;
-    wire iomem_en;
-    assign iomem_en = 1'b1;
-    iomem iomem (
-      .clk(clk),
-      .en(iomem_en),
-      .we(iomem_we),
-      .addr(iomem_addr),
-      .din(iomem_din),
-      .dout(iomem_dout)
-    );
-
     // On-chip UART
     //// UART Receiver
     wire [7:0] uart_rx_data_out;
@@ -103,7 +89,104 @@ module cpu #(
         .data_in_valid(uart_tx_data_in_valid),
         .data_in_ready(uart_tx_data_in_ready)
     );
+    wire control_hazards_sum;
+    wire Hold;
+    wire Hold_decode;
 
+    //iomem
+    wire [31:0] iomem_0, iomem_1, iomem_2, iomem_3, iomem_4, iomem_5;
+    reg [31:0] iomem [6-1:0];
+    assign iomem_0 = iomem[0];
+    assign iomem_1 = iomem[1];
+    assign iomem_2 = iomem[2];
+    assign iomem_3 = iomem[3];
+    assign iomem_4 = iomem[4];
+    assign iomem_5 = iomem[5];
+
+    wire [13:0] iomem_addr;
+    wire [31:0] iomem_din;
+    reg  [31:0] iomem_dout;
+    wire [3:0] iomem_we;
+    wire iomem_en;
+    wire iomem_rst;
+    assign iomem_en = 1'b1;
+    assign iomem_rst = iomem[5] != 0;
+    
+    always @(posedge clk) begin
+        if (iomem_en) begin
+            iomem_dout <= iomem[iomem_addr];
+        end
+    end
+//mem[0] UART control
+//mem[1] UART receiver data
+//mem[2] UART transmitter data
+//mem[3] Cycle counter
+//mem[4] Instruction counter
+//mem[5] Reset counters to 0
+    assign uart_tx_data_in = iomem[2][7:0];
+
+    always @(posedge clk) begin
+        if (iomem_en) begin
+            iomem_dout <= iomem[iomem_addr];
+        end
+    end
+
+    always @(*) begin
+        iomem[0] = {30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready};
+        iomem[1] = {24'b0, uart_rx_data_out};
+    end
+
+    genvar i;
+    generate for (i = 0; i < 4; i = i+1) begin
+        always @(posedge clk) begin
+            if (rst) begin
+                iomem[2][i*8 +: 8] <= 8'b0;
+            end
+            if (iomem_addr == 'd2 && iomem_we[i] && iomem_en) begin
+                iomem[2][i*8 +: 8] <= iomem_din[i*8 +: 8];
+            end
+            else begin
+                iomem[2][i*8 +: 8] <= iomem[2][i*8 +: 8];
+            end
+        end
+    end endgenerate
+
+    always @(posedge clk) begin
+        if(rst || iomem_rst) begin
+            iomem[3] <= 32'b0;
+        end
+        else begin
+            iomem[3] <= iomem[3] + 'd1;
+        end
+    end
+
+    always @(posedge clk) begin
+        if(rst || iomem_rst) begin
+            iomem[4] <= 32'b0;
+        end
+        else if(control_hazards_sum || Hold) begin
+            iomem[4] <= iomem[4];
+        end
+        else begin
+            iomem[4] <= iomem[4] + 'd1;
+        end
+    end
+
+    generate for (i = 0; i < 4; i = i+1) begin
+        always @(posedge clk) begin
+            if (rst) begin
+                iomem[5][i*8 +: 8] <= 8'b0;
+            end
+            if (iomem_addr == 'd2 && iomem_we[i] && iomem_en) begin
+                iomem[5][i*8 +: 8] <= iomem_din[i*8 +: 8];
+            end
+            else begin
+                iomem[5][i*8 +: 8] <= iomem[5][i*8 +: 8];
+            end
+        end
+    end endgenerate
+
+    //CPU pipeline
     reg [31:0] tohost_csr = 0;
 
     wire [31:0] PC_addr;
@@ -111,8 +194,6 @@ module cpu #(
     wire [31:0] Inst_mem;
     reg [31:0] Inst_Fetch;
     wire PCSel;
-    wire Hold;
-    wire Hold_decode;
     wire [31:0] ALU_out_reg;
     wire [31:0] Inst_addr;
     wire Inst_addr_sel; // 0 for bios , 1 for Imem
@@ -129,7 +210,7 @@ module cpu #(
         .Hold(Hold),
         .PCSel(PCSel),
         .ALU(ALU_out_reg),
-        .base_addr(32'h10000000),
+        .base_addr(RESET_PC),
         .PC_addr(PC_addr),
         .mem_addr(Inst_addr)
     );
@@ -244,7 +325,7 @@ module cpu #(
     wire [2:0] LdSel_decode;
     wire [1:0] WBSel_decode;
     wire CSRSel_decode;
-    wire control_hazards_sum;
+
 
     control_unit_decode control_unit_decode (
         .clk(clk),
@@ -391,4 +472,31 @@ module cpu #(
             Data_D_ff1 <= Data_D;
         end
     end
+
+    reg uart_rx_data_out_ready_reg;
+    always @(posedge clk) begin
+        if(rst) begin
+            uart_rx_data_out_ready_reg <= 0;
+        end
+        else begin
+            uart_rx_data_out_ready_reg <= (Inst_Decode[6:2] == 5'b00000 && ALU_out == 32'h80000004 && ~control_hazards_sum);
+        end
+    end
+
+    assign uart_rx_data_out_ready = uart_rx_data_out_ready_reg;
+
+    reg has_byte;
+    always @(posedge clk) begin
+        if(rst) begin
+            has_byte <= 1'b0;
+        end
+        else if(Inst_Execute[6:2] == 5'b01000 && ALU_out_reg == 32'h80000008 && ~control_hazards_sum) begin
+            has_byte <= 1'b1;
+        end
+        else if(has_byte && uart_tx_data_in_ready) begin
+            has_byte <= 1'b0;
+        end
+    end
+
+    assign uart_tx_data_in_valid = has_byte;
 endmodule

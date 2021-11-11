@@ -91,13 +91,13 @@ module control_unit_EX (
 		end
 	end
 	
-	assign MemRW_EX = (control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2) ? 2'b0 : MemRW_decode_reg;
+	assign MemRW_EX = (control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2 || Hold_decode_reg) ? 2'b0 : MemRW_decode_reg;
 
 	always @(posedge clk) begin
 		if(rst) begin
 			RegWen_EX_reg <= 0;
 		end
-		else if(control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2)begin
+		else if(control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2 || Hold_decode_reg)begin
 			RegWen_EX_reg <= 0;
 		end
 		else begin

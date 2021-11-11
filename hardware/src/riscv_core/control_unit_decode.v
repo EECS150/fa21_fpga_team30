@@ -113,7 +113,7 @@ module control_unit_decode (
 
 
     always @(*) begin
-        if(Hold_reg) begin
+        if(Hold_reg || control_hazards_sum) begin //?
             Hold = 1'b0;
         end
         else if(rd_Decode == ra1 && opcode_Decode == opcode_L && Inst_Fetch[1:0] == 2'b11 && (opcode == opcode_R || opcode == opcode_I ||opcode == opcode_S || opcode == opcode_L || opcode == opcode_B ||opcode == opcode_JALR)) begin

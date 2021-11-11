@@ -5,11 +5,11 @@ module DMem_pre (
 	input [31:0] PC_addr_Decode,
 	output reg [31:0] Mem_Data_W,
 	output [13:0] DMem_Data_addr,
-	output reg [3:0]  DMem_WE,
+	output [3:0]  DMem_WE,
 	output [13:0] IMem_Data_addr,
-	output reg [3:0]  IMem_WE,
+	output [3:0]  IMem_WE,
 	output [13:0] IO_Data_addr,
-	output reg [3:0]  IO_WE,
+	output [3:0]  IO_WE,
 	output [11:0] bios_Data_addr
 );
     localparam MEMRW_0 = 2'b00;
