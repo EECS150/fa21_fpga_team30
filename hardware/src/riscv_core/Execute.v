@@ -33,6 +33,7 @@ module Execute (
 			REG:Data_A_mux = Data_A;
 			DATA_D:Data_A_mux = Data_D;
 			DATA_D_ff1:Data_A_mux = Data_D_ff1;
+			default: Data_A_mux = 2'bx;
 		endcase
 	end
 
@@ -41,6 +42,7 @@ module Execute (
 			REG:Data_B_mux = Data_B;
 			DATA_D:Data_B_mux = Data_D;
 			DATA_D_ff1:Data_B_mux = Data_D_ff1;
+			default: Data_B_mux = 2'bx;
 		endcase
 	end
 

@@ -27,6 +27,9 @@ module DMem_pre (
 	assign bios_Data_addr = ALU_out[13:2];
 
 	always @(*) begin
+		Mem_Data_W = 32'bx;
+		Mem_WE = 4'bx;
+
 		case(MemRW_EX)
 			MEMRW_0:begin
 				Mem_Data_W = Data_W;

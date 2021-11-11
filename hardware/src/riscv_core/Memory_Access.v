@@ -23,9 +23,10 @@ module Memory_Access (
 
 	always @(*) begin
 		case(WBSel)
-			ALU:  Data_D <= ALU_out_reg;
-			DMEM: Data_D <= Ld_out;
-			PC_ADD4: Data_D <= PC_addr_Execute + 32'd4;
+			ALU:  Data_D = ALU_out_reg;
+			DMEM: Data_D = Ld_out;
+			PC_ADD4: Data_D = PC_addr_Execute + 32'd4;
+			default: Data_D = 32'bx;
 		endcase
 	end
 

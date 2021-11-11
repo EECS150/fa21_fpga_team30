@@ -34,6 +34,7 @@ module ALU (
             AND:   ALU_out = Data_A & Data_B;
             SEL_A: ALU_out = Data_A;
             SEL_B: ALU_out = Data_B;
+            default: ALU_out = 32'bx;
         endcase
     end
 endmodule

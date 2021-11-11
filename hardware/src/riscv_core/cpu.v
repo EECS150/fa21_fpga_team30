@@ -450,6 +450,7 @@ module cpu #(
             4'b0001, 4'b0011: mem_out = dmem_dout;
             4'b0100: mem_out = bios_doutb;
             4'b1000: mem_out = iomem_dout;
+            default: mem_out = 32'bx;
         endcase
     end
 

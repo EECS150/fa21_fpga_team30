@@ -50,7 +50,6 @@ module control_unit_EX (
 	reg control_hazards_detect;
 	reg control_hazards_reg, control_hazards_reg_ff1, control_hazards_reg_ff2;
 	
-	wire control_hazards;
 	assign control_hazards = control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2;
 
 	assign PCSel = control_hazards_reg;
@@ -67,7 +66,7 @@ module control_unit_EX (
 				BGE : control_hazards_detect = !BrLT;
 				BLTU: control_hazards_detect = BrLT;
 				BGEU: control_hazards_detect = !BrLT;
-				default: control_hazards_detect = 0; 				
+				default: control_hazards_detect = 1'bx; 				
 			endcase
 		end
 		else if(opcode == opcode_JALR || opcode == opcode_JAL) begin
