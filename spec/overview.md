@@ -3,7 +3,7 @@
 ## Introduction
 The goal of this project is to familiarize EECS151/251A students with the methods and tools of digital design.
 Working in a team of two, you will design and implement a 3-stage pipelined RISC-V CPU with a UART for tethering.
-You will then integrate the audio and IO components from the labs and build a small beat detection accelerator.
+You will then integrate the audio and IO components from the labs and build a simple audio synth.
 <!-- Afterwards, you will build a hardware accelerator to accelerate a small Convolutional Neural Network and do a system integration with your RISC-V CPU. -->
 
 Finally, you will optimize your CPU for performance (maximizing the Iron Law) and cost (FPGA resource utilization).
@@ -42,9 +42,15 @@ Here is a description of each checkpoint and how many weeks will be alloted to e
 - **Due:** November 19th, Friday (1 week)
 - Implement a fully functional RISC-V processor core in Verilog. Your processor core should be able to run the `mmult` benchmark successfully.
 - See the [checkpoint 1/2 spec](./checkpoint1.md)
+- You have to get this checkpoint checked off with an FPGA TA either in lab or office hours; demonstrate the following in person:
+    - Functionality of the BIOS (`sw` and `lw, lhu, lbu`)
+    - Loading `mmult` using `hex_to_serial` into the IMEM/DMEM
+    - Jumping to `mmult` from the BIOS, successful execution of `mmult` with the correct checksum, and jump back to BIOS
+    - The measured CPI should be less than 1.2
 
 ### Checkpoint 3 (IO Integration, Sigma-Delta DAC, Safe Clock Crossing, Audio Synth)
 - **Due:** December 3rd, Friday (2 weeks)
+  - This checkpoint will be graded during the final checkoff
 - Integrate the FPGA board buttons/LEDs as CPU readable/controllable IOs
 - Build a simple sigma-delta DAC
 - Build a memory-mapped hardware-accelerated audio synth with 2 NCOs and a digital mixer
@@ -54,6 +60,8 @@ Here is a description of each checkpoint and how many weeks will be alloted to e
 
 ### Checkpoint 4 (Optimization)
 - **Due:** December 3rd, Friday (2 weeks) (final day of class)
+  - This checkpoint will be graded during the final checkoff
+- Attempt to maximize the performance of your CPU by co-optimizing the CPI the clock frequency
 - See the [checkpoint 4 spec](./checkpoint4.md)
 
 ### Final Checkoff
@@ -65,14 +73,44 @@ Here is a description of each checkpoint and how many weeks will be alloted to e
 - **Due:** December 8th, Wednesday (RRR week)
 - See the [final report spec](./final_report.md)
 
+### Grading Rubric
+- Functionality (80%) at the final project checkoff.
+    - 10% from the `cpu_tb`, `asm_tb` (and your custom assembly tests), and the `isa-tests`.
+    - 20% from the `c-tests`, `echo_tb`, and `bios_tb`.
+    - 30% from the `bios` on the FPGA.
+    - 20% from `mmult` on the FPGA.
+    - 10% from the `user_io_test` on the FPGA.
+    - 10% from `piano` on the FPGA.
+- Optimization (10%) from the final report submission.
+    - This score is contingent on implementing all the required functionality. An incomplete project will receive a zero in this category.
+    - If you get your processor running at 100 MHz you will get full credit for optimization
+    - If you instead evaluate different optimizations by recording the CPI / frequency / critical path for each trial, you will get full credit with 3 such evaluations
+- Final report and style (10%) demonstrated throughout the project.
+    - A final report that is well written and hits all the points in the [final report spec](./final_report.md) will get full credit.
+    - Style relates to the cleanliness and clarity of your Verilog code. Your Verilog code should be readable. Your git repo should have no build artifacts and junk committed to it.
+- Extra credit (up to 10%)
+    - Credit based on additional functionality will be qualified on a case by case basis. Students interested in expanding the functionality of their project must meet with a GSI well ahead of time to be qualified for extra credit.
+    - Point value will be decided by the course staff on a case by case basis, and will depend on the complexity of your proposal, the creativity of your idea, and relevance to the material taught.
+
 ## General Project Tips
 Document your project as you go.
 You should comment your Verilog and keep your diagrams up to date.
 Aside from the final project report (you will need to turn in a report documenting your project), you can use your design documents to help the debugging process.
 
+### Extra Credit
 Finish the required features first.
 Attempt extra features after everything works well.
 **If your submitted project does not work by the final deadline, you will not get any credit for any extra credit features you have implemented.**
+
+Teams that have completed the base set of requirements are eligible to receive extra credit worth up to 10% of the project grade by adding extra functionality and demonstrating it at the time of the final checkoff.
+The following are suggested projects that may or may not be feasible in one week.
+
+- Branch Predictor: Implement a two bit (or more complicated) branch predictor with a branch history table (BHT) to replace the naive 'always taken' predictor used in the project
+- 5-Stage Pipeline: Add more pipeline stages and push the clock frequency past 100MHz
+- Audio Recording: Capture mic input from the Pynq's microphone and wire it to the CPU via MMIO
+- RISC-V M Extension: Extend the processor with a hardware multiplier and divider and verify its functionality by modifying `mmult` and your own set of assembly tests
+
+When the time is right, if you are interested in implementing any of these, see the staff for more details.
 
 ### Local Development
 You can build and run everything for this project from your laptop.
