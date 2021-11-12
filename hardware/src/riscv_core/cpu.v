@@ -94,14 +94,14 @@ module cpu #(
     wire Hold_decode;
 
     //iomem
-    wire [31:0] iomem_0, iomem_1, iomem_2, iomem_3, iomem_4, iomem_5;
-    reg [31:0] iomem [6-1:0];
+    wire [31:0] iomem_0, iomem_1, iomem_2, iomem_4, iomem_5, iomem_6;
+    reg [31:0] iomem [7-1:0];
     assign iomem_0 = iomem[0];
     assign iomem_1 = iomem[1];
     assign iomem_2 = iomem[2];
-    assign iomem_3 = iomem[3];
     assign iomem_4 = iomem[4];
     assign iomem_5 = iomem[5];
+    assign iomem_6 = iomem[6];
 
     wire [13:0] iomem_addr;
     wire [31:0] iomem_din;
@@ -110,7 +110,7 @@ module cpu #(
     wire iomem_en;
     wire iomem_rst;
     assign iomem_en = 1'b1;
-    assign iomem_rst = iomem[5] != 0;
+    assign iomem_rst = iomem[6] != 0;
     
     always @(posedge clk) begin
         if (iomem_en) begin
@@ -153,35 +153,35 @@ module cpu #(
 
     always @(posedge clk) begin
         if(rst || iomem_rst) begin
-            iomem[3] <= 32'b0;
-        end
-        else begin
-            iomem[3] <= iomem[3] + 'd1;
-        end
-    end
-
-    always @(posedge clk) begin
-        if(rst || iomem_rst) begin
             iomem[4] <= 32'b0;
-        end
-        else if(control_hazards_sum || Hold) begin
-            iomem[4] <= iomem[4];
         end
         else begin
             iomem[4] <= iomem[4] + 'd1;
         end
     end
 
+    always @(posedge clk) begin
+        if(rst || iomem_rst) begin
+            iomem[5] <= 32'b0;
+        end
+        else if(control_hazards_sum || Hold) begin
+            iomem[5] <= iomem[5];
+        end
+        else begin
+            iomem[5] <= iomem[5] + 'd1;
+        end
+    end
+
     generate for (i = 0; i < 4; i = i+1) begin
         always @(posedge clk) begin
             if (rst) begin
-                iomem[5][i*8 +: 8] <= 8'b0;
+                iomem[6][i*8 +: 8] <= 8'b0;
             end
-            if (iomem_addr == 'd2 && iomem_we[i] && iomem_en) begin
-                iomem[5][i*8 +: 8] <= iomem_din[i*8 +: 8];
+            if (iomem_addr == 'd6 && iomem_we[i] && iomem_en) begin
+                iomem[6][i*8 +: 8] <= iomem_din[i*8 +: 8];
             end
             else begin
-                iomem[5][i*8 +: 8] <= iomem[5][i*8 +: 8];
+                iomem[6][i*8 +: 8] <= iomem[6][i*8 +: 8];
             end
         end
     end endgenerate
