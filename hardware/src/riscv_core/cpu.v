@@ -142,7 +142,7 @@ module cpu #(
             if (rst) begin
                 iomem[2][i*8 +: 8] <= 8'b0;
             end
-            if (iomem_addr == 'd2 && iomem_we[i] && iomem_en) begin
+            else if (iomem_addr == 'd2 && iomem_we[i] && iomem_en) begin
                 iomem[2][i*8 +: 8] <= iomem_din[i*8 +: 8];
             end
             else begin
@@ -177,7 +177,7 @@ module cpu #(
             if (rst) begin
                 iomem[6][i*8 +: 8] <= 8'b0;
             end
-            if (iomem_addr == 'd6 && iomem_we[i] && iomem_en) begin
+            else if (iomem_addr == 'd6 && iomem_we[i] && iomem_en) begin
                 iomem[6][i*8 +: 8] <= iomem_din[i*8 +: 8];
             end
             else begin
