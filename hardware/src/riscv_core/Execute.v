@@ -17,6 +17,7 @@ module Execute (
 	output BrEq,
 	output BrLT,
 	output [31:0] ALU_out,
+	output [31:0] Add_out,
 	output reg [31:0] ALU_out_reg,
 	output reg [31:0] PC_addr_Execute,
 	output [31:0] Data_W,
@@ -62,7 +63,8 @@ module Execute (
     	.Data_A(ALU_Data_A),
     	.Data_B(ALU_Data_B),
     	.ALUSel(ALUSel),
-    	.ALU_out(ALU_out)
+    	.ALU_out(ALU_out),
+    	.Add_out(Add_out)
 	);	
 
 	Branch_Comp Branch_Comp(

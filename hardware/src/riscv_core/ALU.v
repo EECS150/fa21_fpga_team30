@@ -2,7 +2,8 @@ module ALU (
     input [31:0] Data_A,
     input [31:0] Data_B,
     input [3:0] ALUSel,
-    output reg [31:0] ALU_out
+    output reg [31:0] ALU_out,
+    output [31:0] Add_out
 );
     localparam ADD  = 4'b0000;
     localparam SUB  = 4'b1000;
@@ -37,4 +38,6 @@ module ALU (
             default: ALU_out = 32'bx;
         endcase
     end
+
+    assign Add_out = Data_A + Data_B;
 endmodule

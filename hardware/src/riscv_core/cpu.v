@@ -90,8 +90,18 @@ module cpu #(
         .data_in_ready(uart_tx_data_in_ready)
     );
     wire control_hazards_sum;
+    reg control_hazards_sum_ff1;
     wire Hold;
     wire Hold_decode;
+
+    always @(posedge clk) begin
+        if(rst) begin
+            control_hazards_sum_ff1 <= 1'b0;
+        end
+        else begin
+            control_hazards_sum_ff1 <= control_hazards_sum;
+        end
+    end
 
     //iomem
     wire [31:0] iomem_0, iomem_1, iomem_2, iomem_4, iomem_5, iomem_6;
@@ -110,7 +120,7 @@ module cpu #(
     wire iomem_en;
     wire iomem_rst;
     assign iomem_en = 1'b1;
-    assign iomem_rst = iomem[6] != 0;
+
     
     always @(posedge clk) begin
         if (iomem_en) begin
@@ -136,7 +146,7 @@ module cpu #(
         iomem[1] = {24'b0, uart_rx_data_out};
     end
 
-    genvar i;
+/*    genvar i;
     generate for (i = 0; i < 4; i = i+1) begin
         always @(posedge clk) begin
             if (rst) begin
@@ -149,7 +159,18 @@ module cpu #(
                 iomem[2][i*8 +: 8] <= iomem[2][i*8 +: 8];
             end
         end
-    end endgenerate
+    end endgenerate*/
+        always @(posedge clk) begin
+            if (rst) begin
+                iomem[2] <= 32'b0;
+            end
+            else if (iomem_addr == 'd2 && iomem_we[0] == 1'b1  && iomem_en) begin
+                iomem[2][7:0] <= iomem_din[7:0];
+            end
+            else begin
+                iomem[2] <= iomem[2];
+            end
+        end   
 
     always @(posedge clk) begin
         if(rst || iomem_rst) begin
@@ -172,7 +193,7 @@ module cpu #(
         end
     end
 
-    generate for (i = 0; i < 4; i = i+1) begin
+/*    generate for (i = 0; i < 4; i = i+1) begin
         always @(posedge clk) begin
             if (rst) begin
                 iomem[6][i*8 +: 8] <= 8'b0;
@@ -185,6 +206,7 @@ module cpu #(
             end
         end
     end endgenerate
+*/
 
     //CPU pipeline
     reg [31:0] tohost_csr = 0;
@@ -242,6 +264,7 @@ module cpu #(
 
     reg [31:0] Data_A, Data_B;
     wire [31:0] Data_D;
+    wire [31:0] Data_forward;
     reg [31:0] Data_D_ff1;    
     wire [4:0] Addr_D;
     reg [31:0] PC_addr_Decode;
@@ -351,6 +374,7 @@ module cpu #(
     );
 
     wire [31:0] ALU_out;
+    wire [31:0] Add_out;
     wire [31:0] PC_addr_Execute;
     wire [31:0] Data_W;
     wire BrEq, BrLT;
@@ -360,7 +384,7 @@ module cpu #(
         .rst(rst),
         .Data_A(Data_A),
         .Data_B(Data_B),
-        .Data_D(Data_D),
+        .Data_D(Data_forward),
         .Data_D_ff1(Data_D_ff1),
         .PC_addr_Decode(PC_addr_Decode),
         .Inst_Decode(Inst_Decode),
@@ -374,6 +398,7 @@ module cpu #(
         .BrEq(BrEq),
         .BrLT(BrLT),
         .ALU_out(ALU_out),
+        .Add_out(Add_out),
         .ALU_out_reg(ALU_out_reg),
         .PC_addr_Execute(PC_addr_Execute),
         .Data_W(Data_W),
@@ -424,7 +449,7 @@ module cpu #(
     wire [31:0] mem_in;
 
     DMem_pre DMem_pre (
-        .ALU_out(ALU_out),
+        .ALU_out(Add_out),
         .Data_W(Data_W),
         .MemRW_EX(MemRW_EX),
         .PC_addr_Decode(PC_addr_Decode),
@@ -453,7 +478,8 @@ module cpu #(
             default: mem_out = 32'bx;
         endcase
     end
-
+    assign iomem_rst = ~control_hazards_sum_ff1 && Inst_Execute[6:2] == 5'b01000 && ALU_out_reg == 32'h80000018;
+    
     Memory_Access Memory_Access (
     .PC_addr_Execute(PC_addr_Execute),
     .ALU_out_reg(ALU_out_reg),
@@ -462,6 +488,7 @@ module cpu #(
     .LdSel(LdSel_EX),
     .WBSel(WBSel_EX),
     .Data_D(Data_D),
+    .Data_forward(Data_forward),
     .Addr_D(Addr_D)
     );
 
