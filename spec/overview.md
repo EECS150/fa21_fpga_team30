@@ -65,16 +65,16 @@ Here is a description of each checkpoint and how many weeks will be alloted to e
 - See the [checkpoint 4 spec](./checkpoint4.md)
 
 ### Final Checkoff
-- Scheduled for **December 6th and 7th** (Monday and Tuesday, RRR week)
+- Scheduled for **December 7th, Tuesday** (RRR week)
 - Demonstration of your project and final check for functionality
 - See the [final checkoff spec](./final_checkoff.md)
 
 ### Final Report
-- **Due:** December 8th, Wednesday (RRR week)
+- **Due:** December 9th, Thursday (RRR week)
 - See the [final report spec](./final_report.md)
 
 ### Grading Rubric
-- Functionality (80%) at the final project checkoff.
+- Functionality (75%) at the final project checkoff.
     - 10% from the `cpu_tb`, `asm_tb` (and your custom assembly tests), and the `isa-tests`.
     - 20% from the `c-tests`, `echo_tb`, and `bios_tb`.
     - 30% from the `bios` on the FPGA.
@@ -88,6 +88,11 @@ Here is a description of each checkpoint and how many weeks will be alloted to e
 - Final report and style (10%) demonstrated throughout the project.
     - A final report that is well written and hits all the points in the [final report spec](./final_report.md) will get full credit.
     - Style relates to the cleanliness and clarity of your Verilog code. Your Verilog code should be readable. Your git repo should have no build artifacts and junk committed to it.
+- Checkpoints (5%)
+    - 45% from the block diagram checkoff on the checkpoint 1 deadline (10/29/21)
+    - 10% from the ALU and control unit/decoder RTL + testbenches on the checkpoint 1.5 deadline (11/12/21)
+    - 45% from the demonstrated functionality on the checkpoint 2 deadline (11/19/21)
+    - 5% penalty per day (only counting weekdays/non-holiday days) for each day the checkpoint is checked off late
 - Extra credit (up to 10%)
     - Credit based on additional functionality will be qualified on a case by case basis. Students interested in expanding the functionality of their project must meet with a GSI well ahead of time to be qualified for extra credit.
     - Point value will be decided by the course staff on a case by case basis, and will depend on the complexity of your proposal, the creativity of your idea, and relevance to the material taught.

@@ -193,7 +193,7 @@ The BIOS program should be able to read from the BIOS memory (to fetch static da
 This allows the BIOS program to receive user programs over the UART from the host PC and load them into instruction memory.
 
 You can then instruct the BIOS program to jump to an instruction memory address, which begins execution of the program that you loaded.
-At any time, you can press the reset button on the board to return your processor to the BIOS program.
+At any time, you can press the reset button on the board (button 0, as before) to return your processor to the BIOS program.
 
 ### Unaligned Memory Accesses
 In the official RISC-V specification, unaligned loads and stores are supported.
@@ -498,7 +498,7 @@ In addition to the command interface, the BIOS allows you to load programs to th
 
 This script stores the `.hex` file at the specified hex address.
 In order to write into both the data and instruction memories, **remember to set the top nibble of the address to 0x3**.
-(i.e. `./scripts/hex_to_serial software/echo/echo.hex 30000000`, assuming `echo.ld` sets the base address to `0x10000000`).
+(i.e. `./scripts/hex_to_serial ../software/echo/echo.hex 30000000`, assuming `echo.ld` sets the base address to `0x10000000`).
 
 You also need to ensure that the stack and base address are set properly.
 For example, before making the `mmult` program you should set the set the base address to `0x10000000`.

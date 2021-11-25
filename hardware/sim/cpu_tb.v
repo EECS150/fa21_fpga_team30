@@ -288,18 +288,18 @@ module cpu_tb();
 
     `IMEM_PATH.mem[INST_ADDR + 0] = {IMM0[11:0], 5'd1, `FNC_LW,  5'd2,  `OPC_LOAD};
     `IMEM_PATH.mem[INST_ADDR + 1] = {IMM0[11:0], 5'd1, `FNC_LH,  5'd3,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 3] = {IMM1[11:0], 5'd1, `FNC_LH,  5'd4,  `OPC_LOAD};
+    // `IMEM_PATH.mem[INST_ADDR + 3] = {IMM1[11:0], 5'd1, `FNC_LH,  5'd4,  `OPC_LOAD}; // unaligned
     `IMEM_PATH.mem[INST_ADDR + 4] = {IMM2[11:0], 5'd1, `FNC_LH,  5'd5,  `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 5] = {IMM3[11:0], 5'd1, `FNC_LH,  5'd6,  `OPC_LOAD};
+    // `IMEM_PATH.mem[INST_ADDR + 5] = {IMM3[11:0], 5'd1, `FNC_LH,  5'd6,  `OPC_LOAD}; // unaligned
     `IMEM_PATH.mem[INST_ADDR + 6] = {IMM0[11:0], 5'd1, `FNC_LB,  5'd7,  `OPC_LOAD};
     `IMEM_PATH.mem[INST_ADDR + 7] = {IMM1[11:0], 5'd1, `FNC_LB,  5'd8,  `OPC_LOAD};
     `IMEM_PATH.mem[INST_ADDR + 8] = {IMM2[11:0], 5'd1, `FNC_LB,  5'd9,  `OPC_LOAD};
     `IMEM_PATH.mem[INST_ADDR + 9] = {IMM3[11:0], 5'd1, `FNC_LB,  5'd10, `OPC_LOAD};
 
     `IMEM_PATH.mem[INST_ADDR + 10] = {IMM0[11:0], 5'd1, `FNC_LHU, 5'd11, `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 11] = {IMM1[11:0], 5'd1, `FNC_LHU, 5'd12, `OPC_LOAD};
+    // `IMEM_PATH.mem[INST_ADDR + 11] = {IMM1[11:0], 5'd1, `FNC_LHU, 5'd12, `OPC_LOAD}; // unaligned
     `IMEM_PATH.mem[INST_ADDR + 12] = {IMM2[11:0], 5'd1, `FNC_LHU, 5'd13, `OPC_LOAD};
-    `IMEM_PATH.mem[INST_ADDR + 13] = {IMM3[11:0], 5'd1, `FNC_LHU, 5'd14, `OPC_LOAD};
+    // `IMEM_PATH.mem[INST_ADDR + 13] = {IMM3[11:0], 5'd1, `FNC_LHU, 5'd14, `OPC_LOAD}; // unaligned
 
     `IMEM_PATH.mem[INST_ADDR + 14] = {IMM0[11:0], 5'd1, `FNC_LBU, 5'd15, `OPC_LOAD};
     `IMEM_PATH.mem[INST_ADDR + 15] = {IMM1[11:0], 5'd1, `FNC_LBU, 5'd16, `OPC_LOAD};
@@ -313,9 +313,9 @@ module cpu_tb();
     check_result_rf(5'd2,  32'hdeadbeef, "I-Type LW");
 
     check_result_rf(5'd3,  32'hffffbeef, "I-Type LH 0");
-    check_result_rf(5'd4,  32'hffffbeef, "I-Type LH 1");
+    // check_result_rf(5'd4,  32'hffffbeef, "I-Type LH 1");
     check_result_rf(5'd5,  32'hffffdead, "I-Type LH 2");
-    check_result_rf(5'd6,  32'hffffdead, "I-Type LH 3");
+    // check_result_rf(5'd6,  32'hffffdead, "I-Type LH 3");
 
     check_result_rf(5'd7,  32'hffffffef, "I-Type LB 0");
     check_result_rf(5'd8,  32'hffffffbe, "I-Type LB 1");
@@ -323,9 +323,9 @@ module cpu_tb();
     check_result_rf(5'd10, 32'hffffffde, "I-Type LB 3");
 
     check_result_rf(5'd11, 32'h0000beef, "I-Type LHU 0");
-    check_result_rf(5'd12, 32'h0000beef, "I-Type LHU 1");
+    // check_result_rf(5'd12, 32'h0000beef, "I-Type LHU 1");
     check_result_rf(5'd13, 32'h0000dead, "I-Type LHU 2");
-    check_result_rf(5'd14, 32'h0000dead, "I-Type LHU 3");
+    // check_result_rf(5'd14, 32'h0000dead, "I-Type LHU 3");
 
     check_result_rf(5'd15, 32'h000000ef, "I-Type LBU 0");
     check_result_rf(5'd16, 32'h000000be, "I-Type LBU 1");
@@ -474,45 +474,45 @@ module cpu_tb();
     JUMP_ADDR = (32'h1000_0000 + IMM[12:0]) >> 2;
 
     BR_TYPE[0]     = `FNC_BEQ;
-    BR_NAME_TK1[0] = "U-Type BEQ Taken 1";
-    BR_NAME_TK2[0] = "U-Type BEQ Taken 2";
-    BR_NAME_NTK[0] = "U-Type BEQ Not Taken";
+    BR_NAME_TK1[0] = "B-Type BEQ Taken 1";
+    BR_NAME_TK2[0] = "B-Type BEQ Taken 2";
+    BR_NAME_NTK[0] = "B-Type BEQ Not Taken";
 
     BR_TAKEN_OP1[0]  = 100; BR_TAKEN_OP2[0]  = 100;
     BR_NTAKEN_OP1[0] = 100; BR_NTAKEN_OP2[0] = 200;
 
     BR_TYPE[1]       = `FNC_BNE;
-    BR_NAME_TK1[1]   = "U-Type BNE Taken 1";
-    BR_NAME_TK2[1]   = "U-Type BNE Taken 2";
-    BR_NAME_NTK[1]   = "U-Type BNE Not Taken";
+    BR_NAME_TK1[1]   = "B-Type BNE Taken 1";
+    BR_NAME_TK2[1]   = "B-Type BNE Taken 2";
+    BR_NAME_NTK[1]   = "B-Type BNE Not Taken";
     BR_TAKEN_OP1[1]  = 100; BR_TAKEN_OP2[1]  = 200;
     BR_NTAKEN_OP1[1] = 100; BR_NTAKEN_OP2[1] = 100;
 
     BR_TYPE[2]       = `FNC_BLT;
-    BR_NAME_TK1[2]   = "U-Type BLT Taken 1";
-    BR_NAME_TK2[2]   = "U-Type BLT Taken 2";
-    BR_NAME_NTK[2]   = "U-Type BLT Not Taken";
+    BR_NAME_TK1[2]   = "B-Type BLT Taken 1";
+    BR_NAME_TK2[2]   = "B-Type BLT Taken 2";
+    BR_NAME_NTK[2]   = "B-Type BLT Not Taken";
     BR_TAKEN_OP1[2]  = 100; BR_TAKEN_OP2[2]  = 200;
     BR_NTAKEN_OP1[2] = 200; BR_NTAKEN_OP2[2] = 100;
 
     BR_TYPE[3]       = `FNC_BGE;
-    BR_NAME_TK1[3]   = "U-Type BGE Taken 1";
-    BR_NAME_TK2[3]   = "U-Type BGE Taken 2";
-    BR_NAME_NTK[3]   = "U-Type BGE Not Taken";
+    BR_NAME_TK1[3]   = "B-Type BGE Taken 1";
+    BR_NAME_TK2[3]   = "B-Type BGE Taken 2";
+    BR_NAME_NTK[3]   = "B-Type BGE Not Taken";
     BR_TAKEN_OP1[3]  = 300; BR_TAKEN_OP2[3]  = 200;
     BR_NTAKEN_OP1[3] = 100; BR_NTAKEN_OP2[3] = 200;
 
     BR_TYPE[4]       = `FNC_BLTU;
-    BR_NAME_TK1[4]   = "U-Type BLTU Taken 1";
-    BR_NAME_TK2[4]   = "U-Type BLTU Taken 2";
-    BR_NAME_NTK[4]   = "U-Type BLTU Not Taken";
+    BR_NAME_TK1[4]   = "B-Type BLTU Taken 1";
+    BR_NAME_TK2[4]   = "B-Type BLTU Taken 2";
+    BR_NAME_NTK[4]   = "B-Type BLTU Not Taken";
     BR_TAKEN_OP1[4]  = 32'h0000_0001; BR_TAKEN_OP2[4]  = 32'hFFFF_0000;
     BR_NTAKEN_OP1[4] = 32'hFFFF_0000; BR_NTAKEN_OP2[4] = 32'h0000_0001;
 
     BR_TYPE[5]       = `FNC_BGEU;
-    BR_NAME_TK1[5]   = "U-Type BGEU Taken 1";
-    BR_NAME_TK2[5]   = "U-Type BGEU Taken 2";
-    BR_NAME_NTK[5]   = "U-Type BGEU Not Taken";
+    BR_NAME_TK1[5]   = "B-Type BGEU Taken 1";
+    BR_NAME_TK2[5]   = "B-Type BGEU Taken 2";
+    BR_NAME_NTK[5]   = "B-Type BGEU Not Taken";
     BR_TAKEN_OP1[5]  = 32'hFFFF_0000; BR_TAKEN_OP2[5]  = 32'h0000_0001;
     BR_NTAKEN_OP1[5] = 32'h0000_0001; BR_NTAKEN_OP2[5] = 32'hFFFF_0000;
 
