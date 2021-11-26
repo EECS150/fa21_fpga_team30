@@ -6,7 +6,10 @@ module cpu #(
     input clk,
     input rst,
     input serial_in,
-    output serial_out
+    output serial_out,
+    input [2:0] buttons,
+    input [1:0] switches,
+    output [5:0] LEDS
 );
     // BIOS Memory
     // Synchronous read: read takes one cycle
@@ -90,6 +93,7 @@ module cpu #(
         .data_in_ready(uart_tx_data_in_ready)
     );
     wire control_hazards_sum;
+    wire control_hazards_reg, control_hazards_reg_ff1, control_hazards_reg_ff2;
     reg control_hazards_sum_ff1;
     wire Hold;
     wire Hold_decode;
@@ -104,14 +108,18 @@ module cpu #(
     end
 
     //iomem
-    wire [31:0] iomem_0, iomem_1, iomem_2, iomem_4, iomem_5, iomem_6;
-    reg [31:0] iomem [7-1:0];
+    wire [31:0] iomem_0, iomem_1, iomem_2, iomem_4, iomem_5, iomem_6, iomem_8, iomem_9, iomem_10, iomem_12;
+    reg [31:0] iomem [13-1:0];
     assign iomem_0 = iomem[0];
     assign iomem_1 = iomem[1];
     assign iomem_2 = iomem[2];
     assign iomem_4 = iomem[4];
     assign iomem_5 = iomem[5];
     assign iomem_6 = iomem[6];
+    assign iomem_8 = iomem[8];
+    assign iomem_9 = iomem[9];
+    assign iomem_10 = iomem[10];
+    assign iomem_12 = iomem[12];
 
     wire [13:0] iomem_addr;
     wire [31:0] iomem_din;
@@ -122,11 +130,11 @@ module cpu #(
     assign iomem_en = 1'b1;
 
     
-    always @(posedge clk) begin
+/*    always @(posedge clk) begin
         if (iomem_en) begin
             iomem_dout <= iomem[iomem_addr];
         end
-    end
+    end*/
 //mem[0] UART control
 //mem[1] UART receiver data
 //mem[2] UART transmitter data
@@ -146,31 +154,17 @@ module cpu #(
         iomem[1] = {24'b0, uart_rx_data_out};
     end
 
-/*    genvar i;
-    generate for (i = 0; i < 4; i = i+1) begin
-        always @(posedge clk) begin
-            if (rst) begin
-                iomem[2][i*8 +: 8] <= 8'b0;
-            end
-            else if (iomem_addr == 'd2 && iomem_we[i] && iomem_en) begin
-                iomem[2][i*8 +: 8] <= iomem_din[i*8 +: 8];
-            end
-            else begin
-                iomem[2][i*8 +: 8] <= iomem[2][i*8 +: 8];
-            end
+    always @(posedge clk) begin
+        if (rst) begin
+            iomem[2] <= 32'b0;
         end
-    end endgenerate*/
-        always @(posedge clk) begin
-            if (rst) begin
-                iomem[2] <= 32'b0;
-            end
-            else if (iomem_addr == 'd2 && iomem_we[0] == 1'b1  && iomem_en) begin
-                iomem[2][7:0] <= iomem_din[7:0];
-            end
-            else begin
-                iomem[2] <= iomem[2];
-            end
-        end   
+        else if (iomem_addr == 'd2 && iomem_we[0] == 1'b1  && iomem_en) begin
+            iomem[2][7:0] <= iomem_din[7:0];
+        end
+        else begin
+            iomem[2] <= iomem[2];
+        end
+    end   
 
     always @(posedge clk) begin
         if(rst || iomem_rst) begin
@@ -193,20 +187,61 @@ module cpu #(
         end
     end
 
-/*    generate for (i = 0; i < 4; i = i+1) begin
-        always @(posedge clk) begin
-            if (rst) begin
-                iomem[6][i*8 +: 8] <= 8'b0;
-            end
-            else if (iomem_addr == 'd6 && iomem_we[i] && iomem_en) begin
-                iomem[6][i*8 +: 8] <= iomem_din[i*8 +: 8];
-            end
-            else begin
-                iomem[6][i*8 +: 8] <= iomem[6][i*8 +: 8];
-            end
+    reg [2:0] buttons_ff1;
+
+    always @(posedge clk) begin
+        if(rst) begin
+            buttons_ff1 <= 3'b0; 
         end
-    end endgenerate
-*/
+        else begin
+            buttons_ff1 <= buttons;
+        end
+    end
+
+    wire fifo_wr_en;
+    wire [2:0] fifo_din;
+    wire fifo_full;
+    wire fifo_rd_en;
+    wire [2:0] fifo_dout;
+    wire fifo_empty;
+
+    assign fifo_wr_en = ~fifo_full && ((buttons[0] && ~buttons_ff1[0]) || (buttons[1] && ~buttons_ff1[1]) || (buttons[2] && ~buttons_ff1[2]));
+    assign fifo_din = buttons;
+
+    fifo #(
+        .WIDTH(3)
+    ) fifo (
+        .clk(clk),
+        .rst(rst),
+        // Write side
+        .wr_en(fifo_wr_en),
+        .din(fifo_din),
+        .full(fifo_full),
+    
+        // Read side
+        .rd_en(fifo_rd_en),
+        .dout(fifo_dout),
+        .empty(fifo_empty)
+    );
+
+    always @(*) begin
+        iomem[8] = {31'd0, fifo_empty};
+        iomem[9] = {29'd0, fifo_dout};
+        iomem[10] = {30'b0, switches};
+    end
+
+    always @(posedge clk) begin
+        if (rst) begin
+            iomem[12] <= 32'b0;
+        end
+        else if (iomem_addr == 'd12 && iomem_we[0] == 1'b1  && iomem_en) begin
+            iomem[12][5:0] <= iomem_din[5:0];
+        end
+        else begin
+            iomem[12] <= iomem[12];
+        end
+    end   
+    assign LEDS = iomem[12][5:0];
 
     //CPU pipeline
     reg [31:0] tohost_csr = 0;
@@ -412,7 +447,6 @@ module cpu #(
     wire [1:0] WBSel_EX;
     wire CSRSel_EX;
 
-
     control_unit_EX control_unit_EX (
         .clk(clk),
         .rst(rst),
@@ -431,8 +465,12 @@ module cpu #(
         .WBSel_EX_reg(WBSel_EX),
         .CSRSel_EX_reg(CSRSel_EX),
         .PCSel(PCSel),
-        .control_hazards(control_hazards_sum)
+        .control_hazards_reg(control_hazards_reg),
+        .control_hazards_reg_ff1(control_hazards_reg_ff1),
+        .control_hazards_reg_ff2(control_hazards_reg_ff2)
     );
+    
+    assign control_hazards_sum = control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2;
 
     always @(posedge clk) begin
         if(rst) begin
@@ -527,4 +565,6 @@ module cpu #(
     end
 
     assign uart_tx_data_in_valid = has_byte;
+
+    assign fifo_rd_en = Inst_Decode[6:2] == 5'b00000 && ALU_out == 32'h80000024 && ~control_hazards_sum;
 endmodule

@@ -16,7 +16,9 @@ module control_unit_EX (
 	output reg [1:0] WBSel_EX_reg,
 	output reg CSRSel_EX_reg,
 	output PCSel,
-	output control_hazards
+	output reg control_hazards_reg,
+	output reg control_hazards_reg_ff1,
+	output reg control_hazards_reg_ff2
 );
 
 	localparam opcode_R     = 5'b01100;
@@ -48,9 +50,9 @@ module control_unit_EX (
     assign funct3 = Inst[14:12];
 	
 	reg control_hazards_detect;
-	reg control_hazards_reg, control_hazards_reg_ff1, control_hazards_reg_ff2;
+//	reg control_hazards_reg, control_hazards_reg_ff1, control_hazards_reg_ff2;
 	
-	assign control_hazards = control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2;
+//	assign control_hazards = control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2;
 
 	assign PCSel = control_hazards_reg;
 

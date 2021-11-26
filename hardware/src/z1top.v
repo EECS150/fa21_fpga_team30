@@ -92,7 +92,10 @@ module z1top #(
         .clk(cpu_clk),
         .rst(cpu_reset),
         .serial_out(cpu_tx),
-        .serial_in(cpu_rx)
+        .serial_in(cpu_rx),
+        .buttons(buttons_pressed[3:1]),
+        .switches(SWITCHES),
+        .LEDS(LEDS)
     );
 
     cpu_to_synth_cdc #(
