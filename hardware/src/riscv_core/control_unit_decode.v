@@ -5,12 +5,12 @@ module control_unit_decode (
     input [31:0] Inst_Decode,
     input [31:0] Inst_Execute,
     input control_hazards_sum,
-	output reg [2:0] ImmSel_reg,
+	output reg [2:0] ImmSel,
 	output reg BrUn_reg,
 	output reg ASel_reg,
 	output reg BSel_reg,
-    output reg [1:0] Data_ASel_reg,
-    output reg [1:0] Data_BSel_reg,
+    output reg [1:0] Data_ASel,
+    output reg [1:0] Data_BSel,
 	output reg [3:0] ALUSel_reg,
 	output reg [1:0] MemRW_reg,
 	output reg RegWen_reg,
@@ -86,13 +86,13 @@ module control_unit_decode (
     localparam DATA_D_ff1 = 2'b11;
 
     reg [3:0] ALUSel;
-    reg [2:0] ImmSel;
+//    reg [2:0] ImmSel;
     wire BrUn, ASel, BSel, RegWen;
     reg [1:0] MemRW;
     wire [2:0] LdSel;
     reg [1:0] WBSel;
     wire CSRSel;
-    reg [1:0] Data_ASel, Data_BSel;
+//    reg [1:0] Data_ASel, Data_BSel;
     
     reg control_hazards_sum_ff1;
 
@@ -262,12 +262,12 @@ module control_unit_decode (
 
     always @(posedge clk) begin
         if(rst) begin
-            ImmSel_reg <= 0;  
+//            ImmSel_reg <= 0;  
             BrUn_reg   <= 0;
             ASel_reg   <= 0;
             BSel_reg   <= 0;
-            Data_ASel_reg <= 0;
-            Data_BSel_reg <= 0;
+//            Data_ASel_reg <= 0;
+//           Data_BSel_reg <= 0;
             ALUSel_reg <= 0;
             MemRW_reg  <= 0;
             RegWen_reg <= 0;
@@ -277,12 +277,12 @@ module control_unit_decode (
             Hold_reg   <= 0;
         end
         else begin
-            ImmSel_reg <= ImmSel;  
+//            ImmSel_reg <= ImmSel;  
             BrUn_reg   <= BrUn;
             ASel_reg   <= ASel;
             BSel_reg   <= BSel;
-            Data_ASel_reg <= Data_ASel;
-            Data_BSel_reg <= Data_BSel;
+//            Data_ASel_reg <= Data_ASel;
+//            Data_BSel_reg <= Data_BSel;
             ALUSel_reg <= ALUSel;
             MemRW_reg  <= MemRW;
             RegWen_reg <= RegWen;

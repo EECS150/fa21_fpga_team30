@@ -381,9 +381,9 @@ module cpu #(
     end
     
 
-    reg [31:0] Data_A, Data_B;
+    wire [31:0] Data_A, Data_B;
     wire [31:0] Data_D;
-    wire [31:0] Data_forward;
+//    wire [31:0] Data_forward;
     reg [31:0] Data_D_ff1;    
     wire [4:0] Addr_D;
     reg [31:0] PC_addr_Decode;
@@ -411,29 +411,8 @@ module cpu #(
     assign ra2 = Inst_Fetch[24:20];
     assign we = RegWen_EX;
 
-    always @(posedge clk) begin
-        if (rst) begin
-            Data_A <= 0;
-        end
-        else if(Hold) begin
-            Data_A <= Data_A;  
-        end          
-        else begin
-            Data_A <= rd1;
-        end
-    end
-
-    always @(posedge clk) begin
-        if (rst) begin
-            Data_B <= 0;
-        end
-        else if(Hold) begin
-            Data_B <= Data_B;  
-        end       
-        else begin
-            Data_B <= rd2;
-        end
-    end
+    assign Data_A = rd1;
+    assign Data_B = rd2;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -467,7 +446,10 @@ module cpu #(
     wire [2:0] LdSel_decode;
     wire [1:0] WBSel_decode;
     wire CSRSel_decode;
-
+    wire [31:0] Imm;
+    reg [31:0] Imm_reg;
+    reg [31:0] Data_A_mux, Data_B_mux;
+    reg [31:0] Data_A_mux_reg, Data_B_mux_reg;
 
     control_unit_decode control_unit_decode (
         .clk(clk),
@@ -476,12 +458,12 @@ module cpu #(
         .Inst_Decode(Inst_Decode),
         .Inst_Execute(Inst_Execute),
         .control_hazards_sum(control_hazards_sum),
-        .ImmSel_reg(ImmSel),
+        .ImmSel(ImmSel),
         .BrUn_reg(BrUn),
         .ASel_reg(ASel),
         .BSel_reg(BSel),
-        .Data_ASel_reg(Data_ASel),
-        .Data_BSel_reg(Data_BSel),
+        .Data_ASel(Data_ASel),
+        .Data_BSel(Data_BSel),
         .ALUSel_reg(ALUSel),
         .MemRW_reg(MemRW_decode),
         .RegWen_reg(RegWen_decode),
@@ -498,21 +480,72 @@ module cpu #(
     wire [31:0] Data_W;
     wire BrEq, BrLT;
 
+    Imm_Gen Imm_Gen(
+        .Inst(Inst_Fetch),
+        .ImmSel(ImmSel),
+        .Imm(Imm)
+    );
+
+    always @(posedge clk) begin
+        if(rst) begin
+            Imm_reg <= 0;
+        end    
+        else begin
+            Imm_reg <= Imm;
+        end
+    end
+
+    localparam REG = 2'b00;
+    localparam DATA_D = 2'b10;
+    localparam DATA_D_ff1 = 2'b11;
+
+    always @(*) begin
+        case(Data_ASel)
+            REG:Data_A_mux = Data_A;
+            DATA_D:Data_A_mux = ALU_out;
+            DATA_D_ff1:Data_A_mux = Data_D;
+            default: Data_A_mux = 32'bx;
+        endcase
+    end
+
+    always @(*) begin
+        case(Data_BSel)
+            REG:Data_B_mux = Data_B;
+            DATA_D:Data_B_mux = ALU_out;
+            DATA_D_ff1:Data_B_mux = Data_D;
+            default: Data_B_mux = 32'bx;
+        endcase
+    end
+
+    always @(posedge clk) begin
+        if(rst) begin
+            Data_A_mux_reg <= 0;
+        end    
+        else begin
+            Data_A_mux_reg <= Data_A_mux;
+        end
+    end
+
+    always @(posedge clk) begin
+        if(rst) begin
+            Data_B_mux_reg <= 0;
+        end    
+        else begin
+            Data_B_mux_reg <= Data_B_mux;
+        end
+    end
+
     Execute Execute (
         .clk(clk),
         .rst(rst),
-        .Data_A(Data_A),
-        .Data_B(Data_B),
-        .Data_D(Data_forward),
-        .Data_D_ff1(Data_D_ff1),
+        .Data_A_mux(Data_A_mux_reg),
+        .Data_B_mux(Data_B_mux_reg),
         .PC_addr_Decode(PC_addr_Decode),
         .Inst_Decode(Inst_Decode),
-        .Data_ASel(Data_ASel),
-        .Data_BSel(Data_BSel),
         .ASel(ASel),
         .BSel(BSel),
         .ALUSel(ALUSel),
-        .ImmSel(ImmSel),
+        .Imm(Imm_reg),
         .BrUn(BrUn),
         .BrEq(BrEq),
         .BrLT(BrLT),
@@ -610,7 +643,7 @@ module cpu #(
     .LdSel(LdSel_EX),
     .WBSel(WBSel_EX),
     .Data_D(Data_D),
-    .Data_forward(Data_forward),
+//    .Data_forward(Data_forward),
     .Addr_D(Addr_D)
     );
 

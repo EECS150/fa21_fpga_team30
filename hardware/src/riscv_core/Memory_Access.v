@@ -5,7 +5,7 @@ module Memory_Access (
 	input [31:0] Inst_Execute,
 	input [2:0] LdSel,
 	input [1:0] WBSel,
-	output [31:0] Data_forward,
+//	output [31:0] Data_forward,
 	output reg [31:0] Data_D,
 	output [4:0] Addr_D
 );
@@ -21,11 +21,11 @@ module Memory_Access (
 		.LdSel(LdSel),
 		.Ld_out(Ld_out)
 	);
-	assign Data_forward = ALU_out_reg;
+//	assign Data_forward = ALU_out;
 
 	always @(*) begin
 		case(WBSel)
-			ALU:  Data_D = Data_forward;
+			ALU:  Data_D = ALU_out_reg;
 			PC_ADD4: Data_D = PC_addr_Execute + 32'd4;
 			DMEM: Data_D = Ld_out;
 			default: Data_D = 32'bx;
