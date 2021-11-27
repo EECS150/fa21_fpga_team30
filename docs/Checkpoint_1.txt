@@ -1,0 +1,28 @@
+﻿Checkpoint 1
+
+
+1. How many stages is the datapath you've drawn? (i.e. How many cycles does it take to execute 1 instruction?)
+5 stages
+2. How do you handle ALU → ALU hazards?
+        Data forwarding from MA and WB
+3. How do you handle ALU → MEM hazards?
+Data forwarding from MA and WB
+4. How do you handle MEM → ALU hazards?
+        Inject 1 NOP and use data forwarding from the WB stage.
+5. How do you handle MEM → MEM hazards?
+Inject 1 NOP and use data forwarding from the WB stage.
+6. Do you need special handling for 2 cycle apart hazards?
+        For 3 stages, I don’t need to handle it.
+        For 5 stages, I need to use data forwarding from the WB stage..
+7. How do you handle branch control hazards? (What is the mispredict latency, what prediction scheme are you using, are you just injecting NOPs until the branch is resolved, what about data hazards in the branch?)
+Assume branch is not taken. If the branch is taken, the upcoming three instructions are invalid, so there is a mispredict latency of 3 cycles. If this data/instruction is valid, I use data forwarding to handle data hazards in the branch.
+8. How do you handle jump control hazards? Consider jal and jalr separately. What optimizations can be made to special-case handle jal?
+Need 3 cycles latency to handle jump control hazards for both jal and jalr. Forward the ALU output to PC and IMEM.
+9. What is the most likely critical path in your design?
+In 5-stages, Execute is the most likely critical path.
+10. Where do the UART modules, instruction, and cycle counters go? How are you going to drive uart_tx_data_in_valid and uart_rx_data_out_ready (give logic expressions)?
+The UART module is inside the CPU module, and has serial_in and serial_out that connect to the outside. Instruction counter is an I/O register (32'h80000014) that counts the number of instructions executed. Cycle counter is an I/O register (32'h80000010) that counts how many clock cycles elapsed. Uart_tx_data_in_valid is pulled high when there is a Store instruction to UART transmitter data (32'h80000008). uart_rx_data_out_ready is pulled high when there is a Load instruction to UART receiver data (32'h80000004). 
+11. What is the role of the CSR register? Where does it go?
+The role of the CSR register is to indicate whether the test is passed or failed. In this lab, CSR register is an internal register only used in simulation, and it can be accessed in the testbench.
+12. When do we read from BIOS for instructions? When do we read from IMem for instructions? How do we switch from BIOS address space to IMem address space? In which case can we write to IMem, and why do we need to write to IMem? How do we know if a memory instruction is intended for DMem or any IO device?
+When PC[31:28]  == 4’b0100, we read from BIOS for instructions. When PC[31:28] == 4’b0001, we read from IMem for instructions. We can use jal instruction to change the PC to switch from BIOS address space to IMem address space. When Data_addr[31:28] == 4’b001x and PC[30] == 1’b1, we can write to IMem. We need to write to IMem to load the program from the BIOS then switch to IMem to execute the program. When Data_addr[31:28] == 4’b00x1, this memory instruction is intended for DMem. When Data_addr[31:28] == 4’b1000, the memory instruction is intended for IO devices.
