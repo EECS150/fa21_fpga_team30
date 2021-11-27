@@ -9,7 +9,16 @@ module cpu #(
     output serial_out,
     input [2:0] buttons,
     input [1:0] switches,
-    output [5:0] LEDS
+    output [5:0] LEDS,
+    output [23:0] iomem_carrier_nco_1_fcw,
+    output [23:0] iomem_carrier_nco_2_fcw,
+    output [23:0] iomem_carrier_nco_3_fcw,
+    output [23:0] iomem_carrier_nco_4_fcw,
+    output [23:0] iomem_mod_nco_fcw,
+    output [4:0] iomem_mod_nco_shift_term,
+    output [3:0] iomem_note_enable_signal,
+    output iomem_cpu_tx_req,
+    input tx_ack
 );
     // BIOS Memory
     // Synchronous read: read takes one cycle
@@ -121,6 +130,16 @@ module cpu #(
     assign iomem_10 = iomem[10];
     assign iomem_12 = iomem[12];
 
+    reg [31:0] iomem_carrier_nco_1_fcw_reg;
+    reg [31:0] iomem_carrier_nco_2_fcw_reg;
+    reg [31:0] iomem_carrier_nco_3_fcw_reg;
+    reg [31:0] iomem_carrier_nco_4_fcw_reg;
+    reg [31:0] iomem_mod_nco_fcw_reg;
+    reg [4:0] iomem_mod_nco_shift_term_reg;
+    reg [3:0] iomem_note_enable_signal_reg;
+    reg iomem_cpu_tx_req_reg;
+
+
     wire [13:0] iomem_addr;
     wire [31:0] iomem_din;
     reg  [31:0] iomem_dout;
@@ -145,7 +164,12 @@ module cpu #(
 
     always @(posedge clk) begin
         if (iomem_en) begin
-            iomem_dout <= iomem[iomem_addr];
+            if(iomem_addr == 'd133) begin
+                iomem_dout <= {31'b0,tx_ack};
+            end 
+            else begin
+                iomem_dout <= iomem[iomem_addr];
+            end
         end
     end
 
@@ -242,6 +266,66 @@ module cpu #(
         end
     end   
     assign LEDS = iomem[12][5:0];
+
+    /*reg [31:0] iomem_carrier_nco_1_fcw_reg;
+    reg [31:0] iomem_carrier_nco_2_fcw_reg;
+    reg [31:0] iomem_carrier_nco_3_fcw_reg;
+    reg [31:0] iomem_carrier_nco_4_fcw_reg;
+    reg [31:0] iomem_mod_nco_fcw_reg;
+    reg [31:0] iomem_mod_nco_shift_term_reg;
+    reg [31:0] iomem_note_enable_signal_reg;
+    reg [31:0] iomem_cpu_tx_req_reg;*/
+
+    reg alarm;
+
+    integer i;
+    generate   
+        always @(posedge clk) begin
+            if(iomem_en) begin
+                for(i=0; i<4; i=i+1) begin
+                    if (iomem_we[i]) begin
+                        case(iomem_addr)
+                            'd64: iomem_carrier_nco_1_fcw_reg[i*8 +: 8] <= iomem_din[i*8 +: 8];
+                            'd65: iomem_carrier_nco_2_fcw_reg[i*8 +: 8] <= iomem_din[i*8 +: 8];
+                            'd66: iomem_carrier_nco_3_fcw_reg[i*8 +: 8] <= iomem_din[i*8 +: 8];
+                            'd67: iomem_carrier_nco_4_fcw_reg[i*8 +: 8] <= iomem_din[i*8 +: 8];
+                            'd128:iomem_mod_nco_fcw_reg[i*8 +: 8] <= iomem_din[i*8 +: 8];
+                            default: alarm <=1'b1;
+                        endcase
+                    end
+                end
+            end        
+        end 
+    endgenerate
+
+    always @(posedge clk) begin
+        if (iomem_addr == 'd129 && iomem_we[0] == 1'b1  && iomem_en) begin
+            iomem_mod_nco_shift_term_reg <= iomem_din[4:0];
+        end
+    end   
+
+    always @(posedge clk) begin
+        if (iomem_addr == 'd130 && iomem_we[0] == 1'b1  && iomem_en) begin
+            iomem_note_enable_signal_reg <= iomem_din[3:0];
+        end
+    end   
+
+    always @(posedge clk) begin
+        if (iomem_addr == 'd132 && iomem_we[0] == 1'b1  && iomem_en) begin
+            iomem_cpu_tx_req_reg <= iomem_din[0];
+        end
+    end   
+
+    assign iomem_carrier_nco_1_fcw = iomem_carrier_nco_1_fcw_reg[23:0];
+    assign iomem_carrier_nco_2_fcw = iomem_carrier_nco_2_fcw_reg[23:0];
+    assign iomem_carrier_nco_3_fcw = iomem_carrier_nco_3_fcw_reg[23:0];
+    assign iomem_carrier_nco_4_fcw = iomem_carrier_nco_4_fcw_reg[23:0];
+    assign iomem_mod_nco_fcw = iomem_mod_nco_fcw_reg[23:0];
+    assign iomem_mod_nco_shift_term = iomem_mod_nco_shift_term_reg;
+    assign iomem_note_enable_signal = iomem_note_enable_signal_reg;
+    assign iomem_cpu_tx_req = iomem_cpu_tx_req_reg;
+
+
 
     //CPU pipeline
     reg [31:0] tohost_csr = 0;

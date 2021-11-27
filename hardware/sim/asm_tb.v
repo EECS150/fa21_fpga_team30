@@ -70,11 +70,20 @@ module asm_tb();
     check_reg(1, 32'd500, 2);               // Verify that x1 contains 500
     check_reg(2, 32'd100, 3);               // Verify that x2 contains 100
 
-    wait_for_reg_to_equal(20, 32'd3);       
+/*    wait_for_reg_to_equal(20, 32'd3);       
     check_reg(0, 32'd0, 4); 
-    check_reg(1, 32'h11111111, 5);            
-    check_reg(2, 32'h22222222, 6);
-    check_reg(7, 32'd0, 7);
+    check_reg(1, 32'h80000000, 5);       
+    check_reg(6, 32'h80000018, 6);      
+    check_reg(2, 32'h0, 7);
+    check_reg(3, 32'd1, 8);
+    check_reg(4, 32'd1, 9);*/
+
+    wait_for_reg_to_equal(20, 32'd4);       
+    check_reg(0, 32'd0, 1); 
+    check_reg(1, 32'h80000000, 2);       
+    check_reg(2, 32'h80000030, 3);
+    check_reg(3, 32'h00000026, 4);       
+    check_reg(4, 32'h00000026, 5);         
     $display("ALL ASSEMBLY TESTS PASSED!");
     $finish();
   end

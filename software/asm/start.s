@@ -25,14 +25,21 @@ branch1: li x1, 500 # x1 now contains 500
 li x20, 2           # Set the flag register
                     # Now we check that x1 contains 500 and x2 contains 100
 
-lui x1,0x11111
-addi    x1,x1,273 # 11111111 <_end+0x1110111>
-lui x2,0x22222
-addi    x2,x2,546 # 22222222 <_end+0x12221222>
-and x0,x1,x2
-li  x7,0
-li  x3,27
-li x20, 3 
+#lui x1,0x80000
+#addi    x6,x1,24 
+#lw x2,0(x6)
+#li x3, 1
+#sw x3,0(x6)
+#lw x4,0(x6)
+#li x20, 3
+
+lui x1,0x80000
+addi    x2,x1,48 
+li x3, 0x26
+sw x3,0(x2)
+lw x4,0(x2)
+li x20, 4
+
 
 # TODO: add more tests here
 

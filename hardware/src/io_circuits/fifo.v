@@ -60,7 +60,7 @@ module fifo #(
         end
     end
 
-    assign dout = state[1] ? fifo_mem[rd_ptr]: 8'b0;
+    assign dout = state[1] ? fifo_mem[rd_ptr]: 0;
     assign full = cnt == DEPTH;
     assign empty = cnt == 0;
 endmodule

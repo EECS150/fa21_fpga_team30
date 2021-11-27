@@ -3,7 +3,7 @@
 #include "string.h"
 #include "memory_map.h"
 
-#define VOICES 1
+#define VOICES 4
 
 #define SET_MOD_FCW 1
 #define SET_MOD_SHIFT 2

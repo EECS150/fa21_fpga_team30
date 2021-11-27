@@ -8,6 +8,7 @@
 void run_and_time(uint32_t (*f)()) {
     uint32_t result, time, instructions;
     int8_t buffer[BUF_LEN];
+    //COUNTER_RST = 1;
     COUNTER_RST = 0;
     result = (*f)();
     time = CYCLE_COUNTER;

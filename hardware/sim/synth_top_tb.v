@@ -82,8 +82,8 @@ module synth_top_tb();
 
     initial begin
         // Load program
-        $readmemh("../../software/piano/piano.hex", top.`IMEM_PATH.mem, 0, 16384-1);
-        $readmemh("../../software/piano/piano.hex", top.`DMEM_PATH.mem, 0, 16384-1);
+        $readmemh("../../software/piano/piano.hex", top.cpu.dmem.mem, 0, 16384-1);
+        $readmemh("../../software/piano/piano.hex", top.cpu.imem.mem, 0, 16384-1);
 
         `ifndef IVERILOG
             $vcdpluson;
@@ -111,11 +111,11 @@ module synth_top_tb();
         repeat (100) @(posedge clk);
         assert(top.synth_mod_shift == 'd8);
 
-        // Set the synth shift
+       /*dve  // Set the synth shift
         host_to_fpga(8'd5);
         host_to_fpga(8'd2);
         repeat (100) @(posedge clk);
-        assert(top.synth_synth_shift == 'd2);
+        assert(top.synth_synth_shift == 'd2);*/
 
         // Set the modulator FCW (4000 Hz)
         fcw = 24'd1118481;
@@ -159,8 +159,11 @@ module synth_top_tb();
         repeat (100) @(posedge clk);
         assert(top.synth_note_en[0] == 1'b0);
 
-        repeat (1000) @(posedge clk);
-
+        repeat (3000) @(posedge clk);
+        buttons[0] = 1'b1;
+        repeat (100) @(posedge clk); #1;
+        buttons[0] = 1'b0;
+        repeat (2000) @(posedge clk);
         $finish();
     end
 endmodule

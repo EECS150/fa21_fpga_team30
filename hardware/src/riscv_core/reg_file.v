@@ -19,7 +19,7 @@ module reg_file (
 
     genvar i;
     generate
-        for(i = 1; i < 32 ; i = i+1) begin
+        for(i = 1; i < 32 ; i = i+1) begin : REG_FILE
             always @(posedge clk) begin
                 if(i == wa && we) begin
                     mem[i] <= wd;                    
