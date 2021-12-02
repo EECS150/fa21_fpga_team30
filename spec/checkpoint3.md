@@ -52,6 +52,24 @@ The CPU should be able to read the empty signal of the FIFO, and it should be ab
 Modify `z1top.v` and `cpu.v` by instantiating your FIFO, hooking it up with signals from the `button_parser`, and connecting your FIFO's read interface to the RISC-V core.
 Route the `SWITCHES` input and `LEDS` output into your CPU as you please.
 
+### Testing
+You can edit the `asm_tb` to verify proper functionality of your GPIO FIFO.
+For example, you can add a snippet to `asm/start.s` that polls `empty` (0x8000_0020) and when `empty` becomes 0, reads the button by loading from the `read_data` (0x8000_0024) address, and then sets the flag register.
+In `asm_tb.v`, you can simulate a button press, wait for the flag register to be set, and then verify that the correct button data was read into a register.
+
+Here's how you might write the assembly to do this:
+```asm
+loop:
+li x1, 0x80000020
+lw x1, 0(x1)
+andi x1, 1
+bnez x1, loop
+lw x2, 4(x1)
+li x20, 100
+```
+
+Then verify that x2 contains the button press that you simulated in `asm_tb.v`.
+
 ### User I/O Test Program
 The `software/user_io_test` tests the FIFO and user I/O integration.
 
@@ -191,6 +209,15 @@ Inspect `synth_reference` to see what modulator / carrier FCW and shift paramete
 Use `sim/synth_tb.v` to dump samples from your `synth` and the `audio_from_sim` script to generate an audio file to compare with the reference.
 You can also use `./synth_reference` to dump golden DAC samples for use with `synth_tb.v`.
 
+*Do not worry* if the `synth_reference` golden samples do not match exactly with the output from your `synth` or if they diverge after 1000s of samples.
+As long as the audio output from your `synth` closely resembles the `synth_reference`, that is acceptable.
+*Note*: the exact sample checks in `synth_tb` may be off by one sample for some implementations (trust the audio file to verify correct functionality).
+
+#### Debugging
+You may want to print out the intermediate state of the synth reference model to help match numbers with your RTL waveform.
+In `scripts/audio/models/synth.py`, you can uncomment the print statements in lines 28-32 to see the output of the modulator NCO, the modulated FCW, and the output of the carrier NCO for each synth sample generated.
+You might want to set `--num-samples` to something small when running `synth_reference` and compare each intermediate output with the corresponding one in your RTL.
+
 ## From Synth to DAC
 
 ### Scaler
@@ -226,8 +253,24 @@ This implies that your DAC and synth will be running inside a different clock do
 
 We dealt with clock domain crossings (CDCs) before (our synchronizer took an asynchronous signal and brought it into a synchronous domain).
 However the single-bit synchronizer only works with 1-bit signals and not a 24-bit bus like the FCW input to the synth.
-We will implement a 4 phase handshake to make sure we reliably pass data from the RISC-V core's clock domain (TX/Transmit domain) to the synth block's clock domain (RX/Receive domain).
+We will implement a 4 phase handshake to make sure we reliably pass data from the RISC-V core's clock domain (`cpu_clk`) to the synth block's clock domain (`synth_clk`).
 
+The 4 phase handshake involves two 1-bit MMIO registers (`req` and `ack`) in addition to the other MMIO registers (to set the synth's runtime inputs).
+A block diagram is shown below:
+<p align=center>
+  <img width=50% src="./figs/cdc.png"/>
+</p>
+
+Here is how the scheme works:
+
+0. The software (CPU) sets the data MMIO registers (fcws, shift, note_en).
+1. The software (CPU) sets `req` to 1.
+2. `req` passes through the synchronizer in the `synth_clk` domain and becomes synchronous with `synth_clk`.
+3. The synchronized version of `req` enables the data MMIO registers in the `synth_clk` domain. This is safe since the software will not change the data MMIO registers at this time, and the data in those registers has remained stable for several `synth_clk` cycles.
+4. The `req` in the `synth_clk` domain is synchronized back into the `cpu_clk` domain, where it is called `ack`. The software waits for `ack` to become 1, so it knows that the handshake was successful.
+5. The software sets `req` to 0 and waits for `ack` to turn to 0. The clock domain crossing is complete, and we go back to (0) to perform another one.
+
+<!--
 A timing diagram is shown below:
 <p align=center>
   <img width=70% src="./figs/ss_r_ack.png"/>
@@ -240,24 +283,8 @@ Clock domain crossing requires the generation of two new synchronous signals, re
 - Acknowledge is asserted from the RX domain after the data has been captured in the RX domain (this could require holding the data for two clock cycles to ensure data coherency)
 - Request is de-asserted in the TX domain
 - Acknowledge is de-asserted in the RX domain and is then de-asserted in the TX domain
+-->
 
-Implement this with 2-flop synchronizers that synchronize the request and acknowledge signals between the clock domains.
-A block diagram is shown below:
-<p align=center>
-  <img width=50% src="./figs/cdc.png"/>
-</p>
-
-The numbers highlight the flow of data through the synchronizer circuit.
-Here is a detailed sequence of steps to send data from the TX domain to the RX domain:
-- First, the RISC-V core stores the duty cycle to the TX data register and then sets the TX request register high
-- The TX request bit is synchronized into the RX domain
-- Once the RX request bit is high, the RX data register takes in the value from the TX data register (knowing that the TX data register has been stable for 2 cycles)
-- The RX request bit is synchronized back to the TX domain as an acknowledge bit
-- This concludes a data transfer. To prepare for the next transfer, the TX request bit is de-asserted
-- This will cause the TX acknowledge bit to be de-asserted
-- The transmitting side is ready for a new data transfer
-
-While this is slower than simply passing data through clock domains, it transmits data reliably.
 
 ### Implementation
 Implement the 4-phase handshake circuit in `src/audio/cpu_to_synth_cdc.v` using `synchronizer` modules.
@@ -284,13 +311,17 @@ Connect your CPU MMIO registers to the signal chain that forms the synth:
 
 Wire these components in `z1top.v` and verify that `make lint` runs cleanly.
 Connect the sigma-delta DAC output to `pwm_out` and use the `pwm_clk` (150 Mhz) and `pwm_rst` for all components in the synth clock domain.
+See the diagram at the top of the spec for connection details.
 
 ## Top-Level Testing
 We've provided a top-level testbench that integrates both the `synth` inside `z1top` and the `piano` software.
 See `sim/synth_top_tb.v`.
+You will have to compile the software in `software/piano`.
 
 To run the test, you may have to change some hierarchical paths to match those in your design.
 You may also want to look at `software/piano` to see how the off-chip UART is being used to send commands to the `piano` program running on the CPU.
+
+*251A*: You can uncomment the part in `synth_top_tb.v` where a second note is sent, and bump up `N_VOICES` in `software/piano/piano.c` to simulate polyphony.
 
 ## FPGA Testing
 Program the FPGA, `hex_to_serial` `software/piano` and `jal` to the piano program.
