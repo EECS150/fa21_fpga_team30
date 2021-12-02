@@ -64,6 +64,6 @@ module sampler (
         end
     end
 
-    assign synth_ready = cnt_cycle_sample == (CYCLES_PER_SAMPLE - 2);
+    assign synth_ready = cnt_cycle_sample == (CYCLES_PER_SAMPLE - 4);
 
 endmodule
