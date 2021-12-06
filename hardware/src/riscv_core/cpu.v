@@ -117,18 +117,7 @@ module cpu #(
     end
 
     //iomem
-    wire [31:0] iomem_0, iomem_1, iomem_2, iomem_4, iomem_5, iomem_6, iomem_8, iomem_9, iomem_10, iomem_12;
     reg [31:0] iomem [13-1:0];
-    assign iomem_0 = iomem[0];
-    assign iomem_1 = iomem[1];
-    assign iomem_2 = iomem[2];
-    assign iomem_4 = iomem[4];
-    assign iomem_5 = iomem[5];
-    assign iomem_6 = iomem[6];
-    assign iomem_8 = iomem[8];
-    assign iomem_9 = iomem[9];
-    assign iomem_10 = iomem[10];
-    assign iomem_12 = iomem[12];
 
     reg [31:0] iomem_carrier_nco_1_fcw_reg;
     reg [31:0] iomem_carrier_nco_2_fcw_reg;
@@ -142,33 +131,28 @@ module cpu #(
 
     wire [13:0] iomem_addr;
     wire [31:0] iomem_din;
-    reg  [31:0] iomem_dout;
+    reg  [31:0] iomem_dout_reg;
+    wire  [31:0] iomem_dout;
     wire [3:0] iomem_we;
     wire iomem_en;
     wire iomem_rst;
     assign iomem_en = 1'b1;
 
-    
-/*    always @(posedge clk) begin
-        if (iomem_en) begin
-            iomem_dout <= iomem[iomem_addr];
-        end
-    end*/
-//mem[0] UART control
-//mem[1] UART receiver data
-//mem[2] UART transmitter data
-//mem[3] Cycle counter
-//mem[4] Instruction counter
-//mem[5] Reset counters to 0
+    //mem[0] UART control
+    //mem[1] UART receiver data
+    //mem[2] UART transmitter data
+    //mem[3] Cycle counter
+    //mem[4] Instruction counter
+    //mem[5] Reset counters to 0
     assign uart_tx_data_in = iomem[2][7:0];
 
     always @(posedge clk) begin
         if (iomem_en) begin
             if(iomem_addr == 'd133) begin
-                iomem_dout <= {31'b0,tx_ack};
+                iomem_dout_reg <= {31'b0,tx_ack};
             end 
             else begin
-                iomem_dout <= iomem[iomem_addr];
+                iomem_dout_reg <= iomem[iomem_addr[3:0]];
             end
         end
     end
@@ -226,6 +210,7 @@ module cpu #(
     wire [2:0] fifo_din;
     wire fifo_full;
     wire fifo_rd_en;
+    reg fifo_rd_en_ff1;
     wire [2:0] fifo_dout;
     wire fifo_empty;
 
@@ -250,7 +235,7 @@ module cpu #(
 
     always @(*) begin
         iomem[8] = {31'd0, fifo_empty};
-        iomem[9] = {29'd0, fifo_dout};
+
         iomem[10] = {30'b0, switches};
     end
 
@@ -267,14 +252,7 @@ module cpu #(
     end   
     assign LEDS = iomem[12][5:0];
 
-    /*reg [31:0] iomem_carrier_nco_1_fcw_reg;
-    reg [31:0] iomem_carrier_nco_2_fcw_reg;
-    reg [31:0] iomem_carrier_nco_3_fcw_reg;
-    reg [31:0] iomem_carrier_nco_4_fcw_reg;
-    reg [31:0] iomem_mod_nco_fcw_reg;
-    reg [31:0] iomem_mod_nco_shift_term_reg;
-    reg [31:0] iomem_note_enable_signal_reg;
-    reg [31:0] iomem_cpu_tx_req_reg;*/
+    assign iomem_dout = fifo_rd_en_ff1 ? {29'd0, fifo_dout} : iomem_dout_reg;
 
     reg alarm;
 
@@ -340,7 +318,6 @@ module cpu #(
     wire Inst_addr_sel; // 0 for bios , 1 for Imem
     
     assign Inst_addr_sel = Inst_addr[31:28] == 4'b0001 ;
-    //13~11 bits?
     assign bios_addra = Inst_addr_sel ? 12'b0 : Inst_addr[13:2];
     assign imem_addrb = Inst_addr_sel ? Inst_addr[15:2] : 14'b0;
     assign Inst_mem =  Inst_addr_sel? imem_doutb : bios_douta;
@@ -382,9 +359,7 @@ module cpu #(
     
 
     wire [31:0] Data_A, Data_B;
-    wire [31:0] Data_D;
-//    wire [31:0] Data_forward;
-    reg [31:0] Data_D_ff1;    
+    wire [31:0] Data_D; 
     wire [4:0] Addr_D;
     reg [31:0] PC_addr_Decode;
     reg [31:0] Inst_Decode;
@@ -643,18 +618,8 @@ module cpu #(
     .LdSel(LdSel_EX),
     .WBSel(WBSel_EX),
     .Data_D(Data_D),
-//    .Data_forward(Data_forward),
     .Addr_D(Addr_D)
     );
-
-    always @(posedge clk) begin
-        if(rst) begin
-            Data_D_ff1 <= 32'b0;
-        end
-        else begin
-            Data_D_ff1 <= Data_D;
-        end
-    end
 
     reg uart_rx_data_out_ready_reg;
     always @(posedge clk) begin
@@ -662,7 +627,7 @@ module cpu #(
             uart_rx_data_out_ready_reg <= 0;
         end
         else begin
-            uart_rx_data_out_ready_reg <= (Inst_Decode[6:2] == 5'b00000 && ALU_out == 32'h80000004 && ~control_hazards_sum);
+            uart_rx_data_out_ready_reg <= (Inst_Decode[6:2] == 5'b00000 && Add_out == 32'h80000004 && ~control_hazards_sum);
         end
     end
 
@@ -683,5 +648,14 @@ module cpu #(
 
     assign uart_tx_data_in_valid = has_byte;
 
-    assign fifo_rd_en = Inst_Decode[6:2] == 5'b00000 && ALU_out == 32'h80000024 && ~control_hazards_sum;
+    assign fifo_rd_en = Inst_Decode[6:2] == 5'b00000 && Add_out == 32'h80000024 && ~control_hazards_sum;
+
+    always @(posedge clk) begin
+        if(rst) begin
+            fifo_rd_en_ff1 <= 1'b0;
+        end
+        else begin
+            fifo_rd_en_ff1 <= fifo_rd_en;
+        end
+    end
 endmodule

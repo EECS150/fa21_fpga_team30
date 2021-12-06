@@ -18,6 +18,5 @@ module sigma_delta_dac #(
     end
 
     assign sum = sum_reg + {1'b0, code};
-    // Remove this line once you have implemented this module
     assign pwm = sum[CODE_WIDTH] ^ sum_reg[CODE_WIDTH];
 endmodule

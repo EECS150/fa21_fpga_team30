@@ -29,7 +29,6 @@ module ALU (
             SLTU:  ALU_out = $unsigned(Data_A) < $unsigned(Data_B) ? 'b1: 'b0;
             XOR:   ALU_out = Data_A ^ Data_B;
             SRL:   ALU_out = Data_A >> Data_B[4:0];
-            //SRA: ALU_out = {shift_bit{Data_A[31]}, (data_A >> shift_bit)[31-shift_bit:0]};
             SRA:   ALU_out = $signed(Data_A) >>> Data_B[4:0];
             OR:    ALU_out = Data_A | Data_B;
             AND:   ALU_out = Data_A & Data_B;

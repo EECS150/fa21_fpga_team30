@@ -14,14 +14,15 @@ module synth #(
 );
     wire [N_VOICES-1:0][13:0] mod_samp;
     wire [N_VOICES-1:0][23:0] carrier_fcw_modulated;
+    reg [N_VOICES-1:0][23:0] carrier_fcw_modulated_reg;
     wire [N_VOICES-1:0][13:0] carrier_sample;
-//    wire [N_VOICES-1:0][13:0] sum_sample;
     wire [N_VOICES-1:0][23:0] mod_fcw_input;
     wire [N_VOICES-1:0][23:0] carrier_fcw_input;
 
     reg sample_valid_reg_ff1;
     reg sample_valid_reg_ff2;
     reg sample_valid_reg_ff3;
+    reg sample_valid_reg_ff4;
     reg [13:0] sample_sum;
 
     genvar i;
@@ -37,12 +38,22 @@ module synth #(
             );
         
             assign carrier_fcw_modulated[i] = carrier_fcws[i] + (mod_samp[i] << mod_shift);
-            assign carrier_fcw_input[i] = note_en[i] ? carrier_fcw_modulated[i] : 24'b0;
+
+            always @(posedge clk) begin
+                if(rst) begin
+                    carrier_fcw_modulated_reg[i] <= 24'b0;
+                end
+                else begin
+                    carrier_fcw_modulated_reg[i] <= carrier_fcw_modulated[i];
+                end
+            end
+            assign carrier_fcw_input[i] = note_en[i] ? carrier_fcw_modulated_reg[i] : 24'b0;
+            
             nco carrier_nco(
                 .clk(clk),
                 .rst(rst),
                 .fcw(carrier_fcw_input[i]),
-                .next_sample(sample_valid_reg_ff1),
+                .next_sample(sample_valid_reg_ff2),
                 .sample(carrier_sample[i])
             );
         end
@@ -62,7 +73,7 @@ module synth #(
         if(rst) begin
             sample <= 0;
         end
-        else if(sample_valid_reg_ff2) begin
+        else if(sample_valid_reg_ff3) begin
             sample <= sample_sum;
         end
     end
@@ -72,15 +83,15 @@ module synth #(
             sample_valid_reg_ff1 <= 1'b0;
             sample_valid_reg_ff2 <= 1'b0;
             sample_valid_reg_ff3 <= 1'b0;
+            sample_valid_reg_ff4 <= 1'b0;
         end
         else begin
             sample_valid_reg_ff1 <= sample_ready;
             sample_valid_reg_ff2 <= sample_valid_reg_ff1;
             sample_valid_reg_ff3 <= sample_valid_reg_ff2;
+            sample_valid_reg_ff4 <= sample_valid_reg_ff3;
         end
     end
 
-    assign sample_valid = sample_valid_reg_ff3;
-    //assign sample_valid = 0;
-    //assign sample = 0;
+    assign sample_valid = sample_valid_reg_ff4;
 endmodule

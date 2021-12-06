@@ -5,7 +5,6 @@ module Memory_Access (
 	input [31:0] Inst_Execute,
 	input [2:0] LdSel,
 	input [1:0] WBSel,
-//	output [31:0] Data_forward,
 	output reg [31:0] Data_D,
 	output [4:0] Addr_D
 );
@@ -21,7 +20,6 @@ module Memory_Access (
 		.LdSel(LdSel),
 		.Ld_out(Ld_out)
 	);
-//	assign Data_forward = ALU_out;
 
 	always @(*) begin
 		case(WBSel)

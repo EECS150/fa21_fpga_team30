@@ -45,19 +45,18 @@ module control_unit_EX (
     localparam SB = 2'b11;
 
     wire [4:0] opcode;
-    wire [3:0] funct3;
+    wire [2:0] funct3;
     assign opcode = Inst[6:2];
     assign funct3 = Inst[14:12];
 	
 	reg control_hazards_detect;
-//	reg control_hazards_reg, control_hazards_reg_ff1, control_hazards_reg_ff2;
-	
-//	assign control_hazards = control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2;
+	wire control_hazards_sum;
 
 	assign PCSel = control_hazards_reg;
+	assign control_hazards_sum = control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2;
 
 	always @(*) begin
-		if(Hold_decode_reg || control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2) begin
+		if(Hold_decode_reg || control_hazards_sum) begin
 			control_hazards_detect = 0;
 		end
 		else if(opcode == opcode_B) begin
@@ -92,13 +91,13 @@ module control_unit_EX (
 		end
 	end
 	
-	assign MemRW_EX = (control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2 || Hold_decode_reg) ? 2'b0 : MemRW_decode_reg;
+	assign MemRW_EX = (control_hazards_sum || Hold_decode_reg) ? 2'b0 : MemRW_decode_reg;
 
 	always @(posedge clk) begin
 		if(rst) begin
 			RegWen_EX_reg <= 0;
 		end
-		else if(control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2 || Hold_decode_reg)begin
+		else if(control_hazards_sum || Hold_decode_reg)begin
 			RegWen_EX_reg <= 0;
 		end
 		else begin
@@ -110,7 +109,7 @@ module control_unit_EX (
 		if(rst) begin
 			LdSel_EX_reg <= 0;
 		end
-		else if(control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2)begin
+		else if(control_hazards_sum)begin
 			LdSel_EX_reg <= 0;
 		end
 		else begin
@@ -122,7 +121,7 @@ module control_unit_EX (
 		if(rst) begin
 			WBSel_EX_reg <= 0;
 		end
-		else if(control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2)begin
+		else if(control_hazards_sum)begin
 			WBSel_EX_reg <= 0;
 		end
 		else begin
@@ -134,7 +133,7 @@ module control_unit_EX (
 		if(rst) begin
 			CSRSel_EX_reg <= 0;
 		end
-		else if(control_hazards_reg || control_hazards_reg_ff1 || control_hazards_reg_ff2)begin
+		else if(control_hazards_sum)begin
 			CSRSel_EX_reg <= 0;
 		end
 		else begin

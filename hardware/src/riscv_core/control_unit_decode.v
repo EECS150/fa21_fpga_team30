@@ -21,9 +21,6 @@ module control_unit_decode (
     output reg Hold_reg
 	);
 
-//    reg Data_ASel_reg = 2'b0;
-//    reg Data_BSel_reg = 2'b0;
-
 	localparam opcode_R     = 5'b01100;
     localparam opcode_I     = 5'b00100;
     localparam opcode_L     = 5'b00000;
@@ -86,13 +83,11 @@ module control_unit_decode (
     localparam DATA_D_ff1 = 2'b11;
 
     reg [3:0] ALUSel;
-//    reg [2:0] ImmSel;
     wire BrUn, ASel, BSel, RegWen;
     reg [1:0] MemRW;
     wire [2:0] LdSel;
     reg [1:0] WBSel;
     wire CSRSel;
-//    reg [1:0] Data_ASel, Data_BSel;
     
     reg control_hazards_sum_ff1;
 
@@ -127,7 +122,6 @@ module control_unit_decode (
         end
     end
 
-//(opcode == opcode_R || opcode == opcode_I ||opcode == opcode_S || opcode == opcode_L || opcode == opcode_B ||opcode == opcode_JAL ||opcode == opcode_JALR ||opcode == opcode_LUI ||opcode == opcode_AUIPC)
     always @(*) begin
         case(opcode)
             opcode_R, opcode_I, opcode_L, opcode_S, opcode_CSR, opcode_B, opcode_JALR: begin
@@ -147,11 +141,7 @@ module control_unit_decode (
             default: Data_ASel = REG;
         endcase
     end 
-//    wire a, b, c, d;
-//    assign a = opcode_Decode == opcode_R;
-//    assign b = rd_Decode == ra2;
-//    assign c = opcode_Decode == opcode_R || opcode_Decode == opcode_I || opcode_Decode == opcode_AUIPC || opcode_Decode == opcode_LUI;
-//    assign d = opcode == opcode_R;
+
     always @(*) begin
         case(opcode)
             opcode_R, opcode_S, opcode_B: begin
@@ -174,48 +164,48 @@ module control_unit_decode (
 
     always @(*) begin
     	if (opcode == opcode_L || opcode == opcode_S || opcode == opcode_B || opcode == opcode_JALR || opcode == opcode_JAL || opcode == opcode_AUIPC) begin
-    		ALUSel <= ADD;
+    		ALUSel = ADD;
     	end
     	else if(opcode == opcode_R) begin
-    		ALUSel <= {Inst_Fetch[30],funct3};
+    		ALUSel = {Inst_Fetch[30],funct3};
     	end
         else if(opcode == opcode_I) begin
             if(Inst_Fetch[14:12] == 3'b101) begin
-                ALUSel <= {Inst_Fetch[30],funct3};
+                ALUSel = {Inst_Fetch[30],funct3};
             end
             else begin
-                ALUSel <= {1'b0,funct3};
+                ALUSel = {1'b0,funct3};
             end
         end
         else if(opcode == opcode_LUI) begin
-            ALUSel <= SEL_B;
+            ALUSel = SEL_B;
         end
         else if(opcode == opcode_CSR) begin
             if(Inst_Fetch[14:12] == 3'b001) begin
-                ALUSel <= SEL_A;
+                ALUSel = SEL_A;
             end
             else begin
-                ALUSel <= SEL_B;                
+                ALUSel = SEL_B;                
             end
         end
         else begin
-            ALUSel <= 4'b0;            
+            ALUSel = 4'b0;            
         end
     end
 
     always @(*) begin
         case(opcode)
-            opcode_R    : ImmSel <= I; // no_need
-            opcode_I    : ImmSel <= I;
-            opcode_L    : ImmSel <= I;
-            opcode_S    : ImmSel <= S;
-            opcode_B    : ImmSel <= B;
-            opcode_JALR : ImmSel <= I;
-            opcode_JAL  : ImmSel <= J;
-            opcode_AUIPC: ImmSel <= U;
-            opcode_LUI  : ImmSel <= U; 
-            opcode_CSR  : ImmSel <= C;
-            default     : ImmSel <= I;           
+            opcode_R    : ImmSel = I; // no_need
+            opcode_I    : ImmSel = I;
+            opcode_L    : ImmSel = I;
+            opcode_S    : ImmSel = S;
+            opcode_B    : ImmSel = B;
+            opcode_JALR : ImmSel = I;
+            opcode_JAL  : ImmSel = J;
+            opcode_AUIPC: ImmSel = U;
+            opcode_LUI  : ImmSel = U; 
+            opcode_CSR  : ImmSel = C;
+            default     : ImmSel = I;           
         endcase
     end
 
@@ -232,29 +222,29 @@ module control_unit_decode (
 */
     always @(*) begin
         case(opcode)
-            opcode_R    : WBSel <= ALU; // no_need
-            opcode_I    : WBSel <= ALU;
-            opcode_L    : WBSel <= DMEM;
-            opcode_S    : WBSel <= ALU;// no_need
-            opcode_B    : WBSel <= ALU;// no_need
-            opcode_JALR : WBSel <= PC_ADD4;
-            opcode_JAL  : WBSel <= PC_ADD4;
-            opcode_AUIPC: WBSel <= ALU;
-            opcode_LUI  : WBSel <= ALU; 
-            default     : WBSel <= ALU; // no_need
+            opcode_R    : WBSel = ALU; // no_need
+            opcode_I    : WBSel = ALU;
+            opcode_L    : WBSel = DMEM;
+            opcode_S    : WBSel = ALU;// no_need
+            opcode_B    : WBSel = ALU;// no_need
+            opcode_JALR : WBSel = PC_ADD4;
+            opcode_JAL  : WBSel = PC_ADD4;
+            opcode_AUIPC: WBSel = ALU;
+            opcode_LUI  : WBSel = ALU; 
+            default     : WBSel = ALU; // no_need
         endcase
     end
 
     always @(*) begin
         if(opcode != opcode_S) begin
-            MemRW <= MEMRW_0;            
+            MemRW = MEMRW_0;            
         end
         else begin
             case(funct3)
-                3'b000: MemRW <= SB;
-                3'b001: MemRW <= SH;
-                3'b010: MemRW <= SW;
-                default:MemRW <= SW;
+                3'b000: MemRW = SB;
+                3'b001: MemRW = SH;
+                3'b010: MemRW = SW;
+                default:MemRW = SW;
             endcase
         end
     end
@@ -262,12 +252,9 @@ module control_unit_decode (
 
     always @(posedge clk) begin
         if(rst) begin
-//            ImmSel_reg <= 0;  
             BrUn_reg   <= 0;
             ASel_reg   <= 0;
             BSel_reg   <= 0;
-//            Data_ASel_reg <= 0;
-//           Data_BSel_reg <= 0;
             ALUSel_reg <= 0;
             MemRW_reg  <= 0;
             RegWen_reg <= 0;
@@ -277,12 +264,9 @@ module control_unit_decode (
             Hold_reg   <= 0;
         end
         else begin
-//            ImmSel_reg <= ImmSel;  
             BrUn_reg   <= BrUn;
             ASel_reg   <= ASel;
             BSel_reg   <= BSel;
-//            Data_ASel_reg <= Data_ASel;
-//            Data_BSel_reg <= Data_BSel;
             ALUSel_reg <= ALUSel;
             MemRW_reg  <= MemRW;
             RegWen_reg <= RegWen;

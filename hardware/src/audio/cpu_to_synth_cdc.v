@@ -64,8 +64,6 @@ module cpu_to_synth_cdc #(
         end
     endgenerate
 
-    // Remove these lines once you have implemented this module
-
     assign synth_carrier_fcws = synth_carrier_fcws_reg;
     assign synth_mod_fcw = synth_mod_fcw_reg;
     assign synth_mod_shift = synth_mod_shift_reg;
